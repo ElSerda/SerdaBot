@@ -1,0 +1,11 @@
+httpx
+twitchio
+requests
+PyYAML
+fastapi
+uvicorn
+argostranslate
+beautifulsoup4
+langdetect
+apscheduler
+prometheus_client

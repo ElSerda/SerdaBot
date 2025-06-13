@@ -1,0 +1,32 @@
+
+# 📦 Project: SerdaBot (Twitch AI Assistant)
+
+This is a structured Python project using a local LLM (Mistral) served via FastAPI, integrated with Twitch via TwitchIO. The bot handles chat commands and generates responses based on context.
+
+## 🎯 Objective of this review
+
+Please perform a focused code review with the following goals:
+1. Identify and fix any potential Pythonic issues or poor practices.
+2. Simplify and optimize code style where possible.
+3. Ensure function scope, naming, and imports are clean and modular.
+4. Suggest useful unit tests (especially for utils/* files).
+5. Do **not refactor structure** unless necessary — structure is intentional and modular.
+
+## 🔍 Structure provided
+
+You will receive:
+- All command handlers: ask_command.py, game_command.py, trad_command.py, chill_command.py
+- All logic helpers in: utils/
+- The pyproject.toml for toolchain and formatting settings
+- config.sample.yaml for understanding expected runtime parameters
+- PROJECT_STRUCTURE.md for architecture overview
+
+## 📌 Notes
+
+- Model is loaded via ctransformers (GGUF)
+- Model API: FastAPI on localhost:8000/chat
+- Translation: LibreTranslate at localhost:5000
+- Twitch bot: TwitchIO, command-based
+
+Please provide your review suggestions clearly per file or function block.
+

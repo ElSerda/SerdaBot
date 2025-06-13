@@ -1,0 +1,64 @@
+[project]
+name = "eky_ia"
+version = "0.1.0"
+description = "Twitch bot IA powered by mistral + FastAPI"
+requires-python = ">=3.10"
+dependencies = [
+  "httpx",
+  "twitchio",
+  "requests",
+  "PyYAML",
+  "fastapi",
+  "uvicorn",
+  "argostranslate",
+  "beautifulsoup4",
+  "langdetect",
+  "apscheduler",
+  "prometheus_client"
+]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+exclude = ["venv", "scripts", "tools"]
+
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+include = '\.py$'
+exclude = '''
+/(
+    \.venv
+  | venv
+  | \.git
+  | \.mypy_cache
+  | \.pytest_cache
+  | __pycache__
+)/
+'''
+
+[tool.ruff]
+line-length = 88
+exclude = ["venv", ".venv", "scripts", "tools", "__pycache__"]
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "I"]
+ignore = ["E501"]
+fixable = ["ALL"]
+
+[tool.ruff.format]
+quote-style = "single"               # préfère les guillemets simples pour les strings
+indent-style = "space"               # indentation par espaces
+skip-magic-trailing-comma = false    # respecte les virgules finales comme Black
+line-ending = "auto"                 # détection automatique LF/CRLF
+docstring-code-format = true         # reformate les exemples de code dans les docstrings
+docstring-code-line-length = "dynamic"  # adapte la largeur aux docstrings environnantes
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]

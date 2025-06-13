@@ -1,0 +1,39 @@
+# Python cache and build artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+src/eky_ia.egg-info/
+
+# Environment and package managers
+.venv/
+venv/
+
+# Logs and system files
+*.log
+*.bak
+*.zip
+*.pyo
+*.pyd
+*.DS_Store
+Thumbs.db
+coverage.xml
+.coverage
+ruff_output.txt
+
+# IDE and editor files
+.vscode/
+.idea/
+*.code-workspace
+.vscode-settings-backup.json
+
+# Configs not to push
+config.yaml
+
+# Models and sessions (keep local)
+src/model/
+db/sessions/
+
+# Test & build cache
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/

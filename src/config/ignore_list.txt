@@ -1,0 +1,7 @@
+# config/ignore_list.txt
+level up
+lvl
+🚀
+morthycya
+streamelements
+nightbot

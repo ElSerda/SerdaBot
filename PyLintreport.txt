@@ -1,0 +1,16 @@
+************* Module chat.twitch_bot
+src/chat/twitch_bot.py:30:0: C0301: Line too long (101/100) (line-too-long)
+src/chat/twitch_bot.py:74:0: C0301: Line too long (106/100) (line-too-long)
+src/chat/twitch_bot.py:1:0: C0114: Missing module docstring (missing-module-docstring)
+src/chat/twitch_bot.py:16:0: C0115: Missing class docstring (missing-class-docstring)
+src/chat/twitch_bot.py:17:23: W0621: Redefining name 'config' from outer scope (line 13) (redefined-outer-name)
+src/chat/twitch_bot.py:37:4: C0116: Missing function or method docstring (missing-function-docstring)
+src/chat/twitch_bot.py:40:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src/chat/twitch_bot.py:88:4: C0116: Missing function or method docstring (missing-function-docstring)
+src/chat/twitch_bot.py:93:15: W0718: Catching too general exception Exception (broad-exception-caught)
+src/chat/twitch_bot.py:97:0: C0116: Missing function or method docstring (missing-function-docstring)
+src/chat/twitch_bot.py:97:12: W0621: Redefining name 'config' from outer scope (line 13) (redefined-outer-name)
+
+-----------------------------------
+Your code has been rated at 8.36/10
+

@@ -1,0 +1,19 @@
+
+bot:
+  name: "your_bot_name"
+  oauth_token: "oauth:your_token_here"
+  channel: "your_channel_name"
+  lang: "fr"
+  debug: false
+  cooldown: 60
+
+api:
+  url: "http://127.0.0.1:8000/chat"
+
+translate:
+  url: "http://127.0.0.1:5000"
+
+model:
+  model_path: "./models"
+  model_file: "your_model_file.gguf"
+  gpu_layers: 50
