@@ -1,17 +1,18 @@
 #!/bin/bash
-
 echo "🔁 [SerdaBot] Lancement des serveurs..."
 
-# Démarrer l'API IA (serve_mistral.py via uvicorn)
-echo "🚀 Démarrage du serveur IA..."
-nohup uvicorn src.core.server.api_server:app --host 127.0.0.1 --port 8000 --log-level warning > logs/api_server.log 2>&1 &
+mkdir -p logs
 
-# Optionnel : démarrer LibreTranslate si installé
+echo "🚀 Démarrage du serveur IA..."
+PYTHONPATH=src uvicorn src.core.server.api_server:app --port 8000 >> logs/api_server.log 2>&1 &
+
+echo "🌍 Vérification de LibreTranslate..."
 if command -v libretranslate &> /dev/null; then
-    echo "🌍 Démarrage de LibreTranslate..."
-    nohup libretranslate --host 127.0.0.1 --port 5000 > logs/libretranslate.log 2>&1 &
+    echo "🌍 Lancement de LibreTranslate (CLI)..."
+    libretranslate --host 127.0.0.1 --port 5000 >> logs/translate.log 2>&1 &
 else
-    echo "⚠️ LibreTranslate non trouvé, ignoré."
+    echo "⚠️ LibreTranslate CLI non trouvé, tentative via Python module..."
+    python3 -m libretranslate >> logs/translate.log 2>&1 &
 fi
 
 echo "✅ Serveurs lancés. Vérifie les logs si besoin."
