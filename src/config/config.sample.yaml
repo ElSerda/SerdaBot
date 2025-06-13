@@ -1,19 +1,32 @@
+# Bot Configuration Template (SerdaBot)
 
 bot:
-  name: "your_bot_name"
-  oauth_token: "oauth:your_token_here"
-  channel: "your_channel_name"
-  lang: "fr"
-  debug: false
-  cooldown: 60
+  language: "en"                            # Default language ("en" or "fr")
+  name: your_bot_name                       # Name of the bot (e.g., eky_ia)
+  channel: your_channel_name                # Twitch channel name (no @)
+  model_path: "src/model"                   # Path to local model folder
+  model_file: "your-model.gguf"             # GGUF model filename
+  model_type: "mistral"                     # Model type ("mistral", "llama", etc.)
+  use_gpu: true                             # Enable GPU acceleration (true/false)
+  gpu_layers: 50                            # Number of layers to run on GPU
+  cooldown: 10                              # Cooldown between responses (in seconds)
+  model_endpoint: http://127.0.0.1:8000/chat  # URL to external model endpoint
+  log_ia: true                              # Enable AI logging (debugging)
+  debug: true                               # Verbose output for debugging
+  translation: libretranslate              # Use "model" or "libretranslate"
 
-api:
-  url: "http://127.0.0.1:8000/chat"
+  enabled_commands:
+    - game
+    - chill
+    - ask
+    - trad
 
-translate:
-  url: "http://127.0.0.1:5000"
+twitch:
+  token: "oauth:your_oauth_token_here"      # Twitch OAuth token (never commit the real one)
 
-model:
-  model_path: "./models"
-  model_file: "your_model_file.gguf"
-  gpu_layers: 50
+igdb:
+  client_id: "your_igdb_client_id"
+  client_secret: "your_igdb_secret"
+
+rawg:
+  api_key: "your_rawg_api_key"
