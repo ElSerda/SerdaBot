@@ -2,8 +2,8 @@ import os
 import sys
 import time
 import subprocess
-import requests
 import importlib
+import requests
 
 from config.config import load_config
 
