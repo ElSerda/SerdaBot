@@ -1,11 +1,18 @@
 #!/bin/bash
+
+export PYTHONPATH=src
+
 echo "🔁 [SerdaBot] Lancement des serveurs..."
 
+# Créer le dossier de logs si absent
 mkdir -p logs
 
+# === Lancer le serveur FastAPI (LLM proxy) ===
 echo "🚀 Démarrage du serveur IA..."
-PYTHONPATH=src uvicorn src.core.server.api_server:app --port 8000 >> logs/api_server.log 2>&1 &
+nohup uvicorn src.core.server.api_server:app --host 127.0.0.1 --port 8000 >> logs/api_server.log 2>&1 &
 
+
+# === Lancer LibreTranslate ===
 echo "🌍 Vérification de LibreTranslate..."
 if command -v libretranslate &> /dev/null; then
     echo "🌍 Lancement de LibreTranslate (CLI)..."
@@ -15,4 +22,5 @@ else
     python3 -m libretranslate >> logs/translate.log 2>&1 &
 fi
 
-echo "✅ Serveurs lancés. Vérifie les logs si besoin."
+# === Fin ===
+echo "✅ Serveurs lancés. Consulte les logs dans ./logs/ pour les détails."
