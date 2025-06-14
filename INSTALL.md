@@ -1,28 +1,25 @@
-# 🚀 SerdaBot - Installation Guide
+# INSTALL.md — SerdaBot v0.1.0
 
-Ce guide t'explique comment installer et faire tourner SerdaBot dans un environnement propre (Linux / WSL2 conseillé).
-
----
-
-## 📦 1. Prérequis
+## 1. Prerequisites
 
 - Python 3.10+
-- `git` installé
-- Connexion internet (pour les dépendances)
-- Accès au dépôt GitHub
+- Git
+- `libretranslate` (CLI or install via `pip`)
+- Optional: virtual environment (`venv`)
 
 ---
 
-## 🧱 2. Cloner le projet
+## 2. Prepare Your Workspace
 
 ```bash
+mkdir serdabot-test && cd serdabot-test
 git clone https://github.com/ElSerda/SerdaBot.git
 cd SerdaBot
 ```
 
 ---
 
-## 🐍 3. Créer et activer un environnement virtuel
+## 3. Create & Activate a Virtual Environment
 
 ```bash
 python3 -m venv venv
@@ -31,7 +28,7 @@ source venv/bin/activate
 
 ---
 
-## 📦 4. Installer les dépendances
+## 4. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
@@ -39,17 +36,25 @@ pip install -r requirements.txt
 
 ---
 
-## ⚙️ 5. Configurer le bot
+## 5. Configuration
 
 ```bash
 cp src/config/config.sample.yaml src/config/config.yaml
 ```
 
-Modifie `config.yaml` selon ton besoin (modèle, endpoint, token Twitch...).
+---
+
+## 6. Install with Script (Optional, Auto Mode)
+
+```bash
+bash tools/install_project.sh --auto
+```
+
+This script installs dependencies, checks ports, launches servers, and runs a test.
 
 ---
 
-## 🧪 6. Vérifier que tout est prêt
+## 7. Environment Check (Manual)
 
 ```bash
 PYTHONPATH=src python tools/test_env.py
@@ -57,36 +62,54 @@ PYTHONPATH=src python tools/test_env.py
 
 ---
 
-## 🚀 7. Lancer les serveurs (IA + LibreTranslate)
+## 8. Server Management
+
+### Start the servers
 
 ```bash
-./tools/start_servers.sh
+bash tools/start_servers.sh
+```
+
+### Reload the servers
+
+```bash
+bash tools/reload_servers.sh
+```
+
+### Stop the servers
+
+```bash
+bash tools/stop_servers.sh
 ```
 
 ---
 
-## 🤖 8. Lancer le bot Twitch
+## 9. Start the Bot
 
 ```bash
-python src/chat/twitch_bot.py
+PYTHONPATH=src python src/chat/twitch_bot.py
 ```
 
 ---
 
-## 📓 Notes
-
-- Les logs sont stockés dans `logs/`
-- Le modèle `.gguf` doit être présent dans `src/model/`
-- Le fichier `config.yaml` n’est **pas versionné** (ajoute-le toi-même)
-
----
-
-## 🧼 Désinstaller proprement
+## 10. Uninstall (Clean Exit)
 
 ```bash
-./tools/uninstall_serdabot.sh
+bash tools/uninstall_serdabot.sh
 ```
 
 ---
 
-**SerdaBot v0.1.0** - Par ElSerda 🤖
+## Notes
+
+- Logs are stored in `./logs/`
+- GGUF models should be placed in `src/model/`
+- Ports used:
+  - 8000 → IA Server (uvicorn)
+  - 5000 → LibreTranslate
+
+---
+
+## License
+
+This project is licensed under the AGPLv3 — see [LICENSE](LICENSE) for details.
