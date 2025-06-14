@@ -1,7 +1,8 @@
 import logging
 import re
-from datetime import datetime
 import unicodedata
+from datetime import datetime
+
 from langdetect import detect
 
 from core.igdb_api import get_igdb_token, query_game, search_igdb_web
