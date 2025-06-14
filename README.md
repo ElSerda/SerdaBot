@@ -1,6 +1,11 @@
 
 # 🤖 SerdaBot – Twitch AI Assistant (v0.1.0)
 
+![Version](https://img.shields.io/badge/version-v0.1.0-green)
+![License](https://img.shields.io/badge/license-AGPL--v3-blue)
+![Python](https://img.shields.io/badge/python-3.12+-blue)
+![Status](https://img.shields.io/badge/status-Stable-brightgreen)
+
 SerdaBot is a lightweight, multilingual Twitch chat assistant powered by a local Mistral-based language model and FastAPI. Designed for simplicity, extensibility, and fun.
 
 ---
