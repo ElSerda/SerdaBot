@@ -53,18 +53,6 @@ bash tools/start_servers.sh
 python src/chat/twitch_bot.py
 ```
 
----
-
-## 🔒 Before Git Push
-
-- [x] Anonymize `config.yaml` → replace with `config.sample.yaml`
-- [x] Add `.gitignore` for `.gguf`, `config.yaml`, and logs
-- [x] Black + Ruff + Pylint clean
-- [x] Confirm commands work: `!ask`, `!game`, `!trad`, `mention`
-- [x] Include bilingual `README.md` if targeting FR/EN streamers (optional)
-
----
-
 ## ❤️ Credit
 
 Built by El Serda ☕ — for streamers, by a streamer.
