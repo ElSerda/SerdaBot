@@ -1,7 +1,7 @@
 # Bot Configuration Template (SerdaBot)
 
 bot:
-  language: "en"                            # Default language ("en" or "fr")
+  language: "fr"                            # Default language ("en" or "fr")
   name: your_bot_name                       # Name of the bot (e.g., eky_ia)
   channel: your_channel_name                # Twitch channel name (no @)
   model_path: "src/model"                   # Path to local model folder

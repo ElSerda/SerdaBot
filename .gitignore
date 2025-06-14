@@ -27,6 +27,9 @@ models/
 config.yaml
 config.json
 
+# User-specific config
+src/config/config.yaml
+
 # Logs & outputs
 logs/
 *.log
@@ -39,3 +42,4 @@ logs/
 .mypy_cache/
 .pytest_cache/
 ruff_output.txt
+

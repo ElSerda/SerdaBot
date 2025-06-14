@@ -9,6 +9,7 @@ from config.config import load_config
 from core.commands.ask_command import handle_ask_command
 from core.commands.chill_command import handle_chill_command
 from core.commands.game_command import handle_game_command
+from core.commands.trad_command import handle_trad_command
 
 config = load_config()
 
@@ -77,6 +78,20 @@ class TwitchBot(commands.Bot):
             await self.run_with_cooldown(
                 user, lambda: handle_ask_command(message, self.config, query, now)
             )
+
+        # !trad WIP
+
+        elif cleaned.startswith("!trad") and "trad" in self.enabled:
+            user_input = content[5:].strip()  # supprime "!trad "
+            if user_input == "":
+                await self.safe_send(message.channel, f"@{user} ⚠️ Tu dois fournir un texte à traduire.")
+                return
+            await self.run_with_cooldown(
+                user, lambda: handle_trad_command(message, self.config, user_input, now)
+            )
+
+
+        # !trad WIP
 
         elif self.botname in cleaned and "chill" in self.enabled:
             words = re.findall(r"\b\w+\b", cleaned)

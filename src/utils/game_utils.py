@@ -1,6 +1,7 @@
+import logging
 import re
 from datetime import datetime
-import logging
+import unicodedata
 from langdetect import detect
 
 from core.igdb_api import get_igdb_token, query_game, search_igdb_web
@@ -19,6 +20,7 @@ def normalize_platforms(platforms):
 
 def compress_platforms(platforms):
     mapping = {
+        "Google Stadia": "Stadia",
         "Xbox Series X|S": "Xbox",
         "Xbox One": "Xbox",
         "Nintendo Switch 2": "Switch 2",
@@ -42,6 +44,7 @@ def clean_summary(summary: str, game_name: str) -> str:
 
 
 def sanitize_slug(slug: str) -> str:
+    slug = unicodedata.normalize("NFKD", slug).encode("ascii", "ignore").decode("ascii")
     return re.sub(r"[^a-zA-Z0-9-]", "", slug.replace(" ", "-").lower())
 
 

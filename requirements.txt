@@ -1,0 +1,13 @@
+httpx
+twitchio
+requests
+PyYAML
+fastapi
+uvicorn
+argostranslate
+beautifulsoup4==4.9.3
+langdetect
+apscheduler
+prometheus_client
+ctransformers
+libretranslate
