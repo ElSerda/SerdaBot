@@ -1,0 +1,55 @@
+# ===== SERDABOT GITIGNORE =====
+
+# === SECRETS & CONFIG ===
+config.yaml
+src/config/config.yaml
+*.env
+.env*
+
+# === DATABASE & SESSIONS ===
+db/sessions/
+*.db
+*.sqlite*
+
+# === LOGS ===
+logs/
+*.log
+
+# === PYTHON ===
+__pycache__/
+*.py[cod]
+*.so
+build/
+dist/
+*.egg-info/
+.Python
+
+# === VIRTUAL ENV ===
+venv/
+env/
+.venv/
+
+# === IDE & TEMP ===
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# === DEVELOPMENT FILES ===
+test_*.py
+stress_test.py
+*_test.py
+.pylintrc
+MIGRATION_*.md
+TRANSLATION_SIMPLE.md
+TRANSLATION_SYSTEM.md
+config.sample.yaml
+CHECKUP_*.md
+RELEASE_*.md
+PROJECT_STRUCTURE.md
+
+# === TOOLS TESTS ===
+tools/test_*.py
+tools/*_test.py

@@ -1,0 +1,11 @@
+httpx
+twitchio
+requests
+PyYAML
+fastapi
+uvicorn
+deep-translator==1.11.4
+beautifulsoup4==4.9.3
+apscheduler
+prometheus_client
+openai
