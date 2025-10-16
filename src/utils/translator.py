@@ -14,15 +14,21 @@ from pathlib import Path
 class Translator:
     """Traducteur simple avec whitelist devs"""
     
-    def __init__(self, devs_file='data/devs.json', blocked_file='data/blocked_sites.json'):
+    def __init__(self, devs_file='data/devs.json', blocked_file='data/blocked_sites.json',
+                 bot_whitelist_file='data/bot_whitelist.json',
+                 bot_blacklist_file='data/bot_blacklist.json'):
         self.translator_en_fr = GoogleTranslator(source='en', target='fr')
         self.translator_fr_en = GoogleTranslator(source='fr', target='en')
         
         self.devs_file = Path(devs_file)
         self.blocked_file = Path(blocked_file)
+        self.bot_whitelist_file = Path(bot_whitelist_file)
+        self.bot_blacklist_file = Path(bot_blacklist_file)
         
         self.devs = self._load_json(self.devs_file, set())
         self.blocked_sites = self._load_json(self.blocked_file, set())
+        self.bot_whitelist = self._load_json(self.bot_whitelist_file, set())
+        self.bot_blacklist = self._load_json(self.bot_blacklist_file, set())
     
     def _load_json(self, filepath, default):
         """Charge un fichier JSON ou retourne default"""
@@ -115,6 +121,65 @@ class Translator:
     def get_blocked_sites(self):
         """Retourne la liste des sites bloqués"""
         return sorted(list(self.blocked_sites))
+    
+    # === BOT WHITELIST / BLACKLIST ===
+    
+    def add_bot_to_whitelist(self, bot_name):
+        """Ajoute un bot à la whitelist (SerdaBot ne lui répondra jamais)"""
+        bot_name = bot_name.lower().strip('@')
+        self.bot_whitelist.add(bot_name)
+        self._save_json(self.bot_whitelist_file, self.bot_whitelist)
+        return True
+    
+    def remove_bot_from_whitelist(self, bot_name):
+        """Retire un bot de la whitelist"""
+        bot_name = bot_name.lower().strip('@')
+        if bot_name in self.bot_whitelist:
+            self.bot_whitelist.remove(bot_name)
+            self._save_json(self.bot_whitelist_file, self.bot_whitelist)
+            return True
+        return False
+    
+    def add_bot_to_blacklist(self, bot_name):
+        """Ajoute un bot à la blacklist (SerdaBot ignorera tous ses messages)"""
+        bot_name = bot_name.lower().strip('@')
+        self.bot_blacklist.add(bot_name)
+        self._save_json(self.bot_blacklist_file, self.bot_blacklist)
+        return True
+    
+    def remove_bot_from_blacklist(self, bot_name):
+        """Retire un bot de la blacklist"""
+        bot_name = bot_name.lower().strip('@')
+        if bot_name in self.bot_blacklist:
+            self.bot_blacklist.remove(bot_name)
+            self._save_json(self.bot_blacklist_file, self.bot_blacklist)
+            return True
+        return False
+    
+    def is_bot_whitelisted(self, bot_name):
+        """Vérifie si un bot est dans la whitelist"""
+        return bot_name.lower() in self.bot_whitelist
+    
+    def is_bot_blacklisted(self, bot_name):
+        """Vérifie si un bot est dans la blacklist"""
+        return bot_name.lower() in self.bot_blacklist
+    
+    def get_whitelisted_bots(self):
+        """Retourne la liste des bots whitelistés"""
+        return sorted(list(self.bot_whitelist))
+    
+    def get_blacklisted_bots(self):
+        """Retourne la liste des bots blacklistés"""
+        return sorted(list(self.bot_blacklist))
+    
+    def should_ignore_bot(self, username):
+        """
+        Détermine si SerdaBot doit ignorer ce bot.
+        - Si bot est dans la whitelist → IGNORER (ne pas répondre)
+        - Si bot est dans la blacklist → IGNORER (bloquer complètement)
+        """
+        username_lower = username.lower()
+        return self.is_bot_whitelisted(username_lower) or self.is_bot_blacklisted(username_lower)
     
     # === TRADUCTION ===
     

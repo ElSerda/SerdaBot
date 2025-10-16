@@ -19,7 +19,8 @@ def get_igdb_token():
         'client_secret': config['igdb']['client_secret'],
         'grant_type': 'client_credentials',
     }
-    res = httpx.post(TOKEN_URL, data=payload)
+    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+    res = httpx.post(TOKEN_URL, data=payload, headers=headers, timeout=10)
     res.raise_for_status()
     return res.json()['access_token']
 

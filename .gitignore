@@ -6,6 +6,21 @@ src/config/config.yaml
 *.env
 .env*
 
+# === TOKENS & SESSIONS ===
+.tio.tokens.json
+*.tokens.json
+
+# === DATA FILES (Private) ===
+data/devs.json
+data/bot_whitelist.json
+data/bot_blacklist.json
+data/blocked_sites.json
+
+# === PROMPTS (Easter Eggs & Personal) ===
+src/prompts/prompt_*_elserda.txt
+src/prompts/prompt_ask_elserda.txt
+src/prompts/prompt_chill_elserda.txt
+
 # === DATABASE & SESSIONS ===
 db/sessions/
 *.db
@@ -49,6 +64,7 @@ config.sample.yaml
 CHECKUP_*.md
 RELEASE_*.md
 PROJECT_STRUCTURE.md
+TODO.md
 
 # === TOOLS TESTS ===
 tools/test_*.py

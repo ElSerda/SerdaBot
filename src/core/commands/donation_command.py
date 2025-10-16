@@ -1,13 +1,15 @@
-from twitchio import Message
+"""Command handler for donation/support commands."""
+
+from twitchio import Message  # pyright: ignore[reportPrivateImportUsage]
 
 
-async def handle_donation_command(message: Message, config: dict, now):
+async def handle_donation_command(message: Message, config: dict, now):  # pylint: disable=unused-argument
     """Gère les commandes de donation/support"""
     user = (message.author.name or "user").lower()
     debug = config["bot"].get("debug", False)
     
     # URLs de donation/support
-    kofi_url = config["bot"].get("kofi_url", "https://ko-fi.com/el_serda")
+    kofi_url = config["bot"].get("kofi_url", "https://ko-fi.com/your_username")
     donation_message = config["bot"].get("donation_message", 
         "☕ Merci pour le support ! Tu peux soutenir le stream ici : {kofi_url} 💜")
     

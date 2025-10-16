@@ -1,7 +1,9 @@
+"""Command handler for game information lookup."""
+
 import json
 from datetime import datetime
 
-from twitchio import Message
+from twitchio import Message  # pyright: ignore[reportPrivateImportUsage]
 
 from utils.game_utils import (
     choose_best_summary,
@@ -16,6 +18,7 @@ from utils.translator import Translator
 
 
 def clean_translation(text: str) -> str:
+    """Clean common translation mistakes in French game descriptions."""
     replacements = {
         "plateforme super étanche": "jeu de plateforme",
         "secrets dérisoires": "secrets cachés",
@@ -28,11 +31,12 @@ def clean_translation(text: str) -> str:
     return text
 
 
-async def handle_game_command(message: Message, config: dict, game_name: str, now):
+async def handle_game_command(message: Message, config: dict, game_name: str, now):  # pylint: disable=unused-argument
+    """Handle the !gameinfo command to fetch game information."""
     user = (message.author.name or "user").lower()
     debug = config["bot"].get("debug", False)
     cooldown = config["bot"].get("cooldown", 60)
-    
+
     # Initialize translator
     translator = Translator()
 
@@ -50,7 +54,10 @@ async def handle_game_command(message: Message, config: dict, game_name: str, no
 
         if debug:
             debug_data = {k: v for k, v in data.items() if k != "summary"}
-            print(f"[GAME] 🔎 Données brutes API (hors summary) :\n" + json.dumps(debug_data, indent=2, ensure_ascii=False))
+            print(
+                "[GAME] 🔎 Données brutes API (hors summary) :\n"
+                + json.dumps(debug_data, indent=2, ensure_ascii=False)
+            )
 
         if not data:
             await message.channel.send(f"❌ Jeu introuvable : {game_name}")
@@ -73,14 +80,26 @@ async def handle_game_command(message: Message, config: dict, game_name: str, no
         translated = summary
         try:
             # If summary looks like English, translate it
-            if any(word in summary.lower() for word in ['the', 'and', 'you', 'with', 'for', 'this', 'that']):
+            if any(
+                word in summary.lower()
+                for word in ['the', 'and', 'you', 'with', 'for', 'this', 'that']
+            ):
+                input_len = len(summary)
+                input_tokens = input_len // 4  # Estimation: ~4 chars = 1 token
+                print(f"[METRICS-GAME] 🌐 Traduction EN→FR: {input_len} chars (~{input_tokens} tokens)")
+                
                 result = translator.translate(summary, source='en', target='fr')
                 if result and not result.startswith('⚠️'):  # Translation succeeded
                     translated = result
-        except Exception as e:
+                    output_len = len(translated)
+                    output_tokens = output_len // 4
+                    print(f"[METRICS-GAME] ✅ Traduit: {output_len} chars (~{output_tokens} tokens)")
+                else:
+                    print("[METRICS-GAME] ⚠️ Traduction échouée, texte original conservé")
+        except (RuntimeError, ValueError, KeyError) as e:
             if debug:
                 print(f"[GAME] ⚠️ Translation error: {e}")
-        
+
         translated = clean_translation(translated)
 
         # Gestion des dates
@@ -96,8 +115,11 @@ async def handle_game_command(message: Message, config: dict, game_name: str, no
             release_ts = data.get("release")
 
         try:
-            release_ts = int(release_ts)
-            release_year = datetime.utcfromtimestamp(release_ts).strftime('%Y')
+            if release_ts is not None:
+                release_ts = int(release_ts)
+                release_year = datetime.utcfromtimestamp(release_ts).strftime('%Y')
+            else:
+                release_year = "?"
         except (ValueError, TypeError) as e:
             if debug:
                 print(f"[GAME] ⚠️ Erreur date release_ts: {release_ts} → {e}")
@@ -142,6 +164,12 @@ async def handle_game_command(message: Message, config: dict, game_name: str, no
                 translated = translated[:max_chars].strip() + "…"
 
         final = f"{base}{mode_display} :\n{translated}{suffix}"
+        
+        # Métriques finales
+        final_len = len(final)
+        final_tokens = final_len // 4
+        print(f"[METRICS-GAME] 📤 Message final: {final_len} chars (~{final_tokens} tokens)")
+        
         await message.channel.send(final)
 
         if debug:
@@ -151,6 +179,6 @@ async def handle_game_command(message: Message, config: dict, game_name: str, no
             print(f"[GAME] Plateformes : {platforms}")
             print(f"[GAME] Modes de jeu : {mode_display.strip(' -')}")
 
-    except Exception as e:
+    except (RuntimeError, ValueError, KeyError, TypeError) as e:
         await message.channel.send(f"@{user} ⚠️ Erreur lors du traitement.")
         print(f"❌ [GAME] Exception : {e}")

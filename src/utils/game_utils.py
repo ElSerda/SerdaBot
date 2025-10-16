@@ -61,23 +61,35 @@ async def fetch_steam_summary(game_name: str, config: dict):
     try:
         from utils.steam import search_steam_summary
 
-        return await search_steam_summary(game_name, config)
-    except Exception:
+        result = await search_steam_summary(game_name, config)
+        if result:
+            print(f"[METRICS-GAME] 📥 Steam: {len(result)} chars summary")
+        else:
+            print("[METRICS-GAME] ⚠️ Steam: aucun résumé trouvé")
+        return result
+    except Exception as e:
+        print(f"[METRICS-GAME] ❌ Steam error: {e}")
         return ""
 
 
 async def fetch_game_data(game_name: str, config: dict) -> dict:
+    print(f"[METRICS-GAME] 🔍 Recherche: '{game_name}'")
     token = get_igdb_token()
     data = query_game(game_name, token)
     if data:
         logging.debug("✅ IGDB API utilisée.")
+        summary_len = len(data.get('summary', ''))
+        print(f"[METRICS-GAME] 📥 IGDB API: {summary_len} chars summary")
         return data
 
     data = await search_igdb_web(game_name, config)
     if data:
         logging.debug("⚠️ Fallback IGDB web utilisé.")
+        summary_len = len(data.get('summary', ''))
+        print(f"[METRICS-GAME] 📥 IGDB Web Scraping: {summary_len} chars summary")
         return data
 
+    print("[METRICS-GAME] ❌ Aucune donnée trouvée")
     return {}
 
 

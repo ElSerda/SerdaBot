@@ -1,11 +1,14 @@
-from twitchio import Message
-from utils.ask_utils import build_ask_prompt, call_model
+"""Command handler for !ask - AI-powered question answering."""
+
+from twitchio import Message  # pyright: ignore[reportPrivateImportUsage]
+
+from src.utils.ask_utils import build_ask_prompt, call_model
 
 
-async def handle_ask_command(message: Message, config: dict, question: str, now):
+async def handle_ask_command(message: Message, config: dict, question: str, now):  # pylint: disable=unused-argument
+    """Handle the !ask command to answer user questions using AI."""
     user = (message.author.name or "user").lower()
     debug = config["bot"].get("debug", False)
-    cooldown = config["bot"].get("cooldown", 60)
 
     if not question.strip():
         await message.channel.send(

@@ -1,6 +1,9 @@
-from twitchio import Message
-from utils.ask_utils import call_model
+"""Command handler for chill/sarcastic bot responses."""
+
+from twitchio import Message  # pyright: ignore[reportPrivateImportUsage]
+
 from prompts.prompt_loader import load_prompt_template
+from utils.ask_utils import call_model
 
 
 def truncate_response(response: str, limit: int = 500) -> str:
@@ -16,7 +19,8 @@ def truncate_response(response: str, limit: int = 500) -> str:
     return response[:limit].strip() + "…"
 
 
-async def handle_chill_command(message: Message, config: dict, now):
+async def handle_chill_command(message: Message, config: dict, now):  # pylint: disable=unused-argument
+    """Handle chill command with sarcastic AI responses."""
     botname = config["bot"]["name"].lower()
     debug = config["bot"].get("debug", False)
     lang = config["bot"].get("language", "fr")

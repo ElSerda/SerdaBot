@@ -13,9 +13,10 @@ def query_rawg_game(game_name, config):
     if api_key:
         params['key'] = api_key
 
+    # User-Agent configurable ou par défaut générique
+    user_agent = config.get('bot', {}).get('user_agent', 'TwitchBot (https://github.com/YourRepo)')
     headers = {
-        'Accept': 'application/json',
-        'User-Agent': 'eky_ia bot (https://twitch.tv)',
+        'User-Agent': user_agent,
     }
 
     res = requests.get(url, params=params, headers=headers, timeout=10)
