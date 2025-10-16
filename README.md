@@ -1,3 +1,4 @@
+![CI](https://github.com/ElSerda/SerdaBot/actions/workflows/ci.yml/badge.svg)
 
 # 🤖 SerdaBot – Twitch AI Assistant (v0.1.0)
 
