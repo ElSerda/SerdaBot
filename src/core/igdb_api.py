@@ -4,16 +4,20 @@ import httpx
 
 from config.config import load_config
 
-config = load_config()
-
 TOKEN_URL = 'https://id.twitch.tv/oauth2/token'
 API_URL = 'https://api.igdb.com/v4/games'
+
+
+def _get_config():
+    """Charge la config de manière lazy (à la demande)."""
+    return load_config()
 
 
 def get_igdb_token():
     """
     Récupère un token OAuth2 valide pour IGDB (via config.yaml)
     """
+    config = _get_config()
     payload = {
         'client_id': config['igdb']['client_id'],
         'client_secret': config['igdb']['client_secret'],
@@ -29,6 +33,7 @@ def query_game(game_name, token):
     """
     Interroge l'API IGDB pour récupérer les infos sur un jeu donné.
     """
+    config = _get_config()
     headers = {
         'Client-ID': config['igdb']['client_id'],
         'Authorization': f'Bearer {token}',

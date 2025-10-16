@@ -5,8 +5,6 @@ from datetime import datetime
 
 from langdetect import detect
 
-from core.igdb_api import get_igdb_token, query_game, search_igdb_web
-
 
 def normalize_platforms(platforms):
     if isinstance(platforms, list):
@@ -73,6 +71,9 @@ async def fetch_steam_summary(game_name: str, config: dict):
 
 
 async def fetch_game_data(game_name: str, config: dict) -> dict:
+    # Import lazy pour éviter les erreurs lors des tests unitaires
+    from core.igdb_api import get_igdb_token, query_game, search_igdb_web
+    
     print(f"[METRICS-GAME] 🔍 Recherche: '{game_name}'")
     token = get_igdb_token()
     data = query_game(game_name, token)
