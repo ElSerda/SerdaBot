@@ -53,9 +53,7 @@ env/
 Thumbs.db
 
 # === DEVELOPMENT FILES ===
-test_*.py
 stress_test.py
-*_test.py
 .pylintrc
 MIGRATION_*.md
 TRANSLATION_SIMPLE.md
@@ -66,6 +64,11 @@ RELEASE_*.md
 PROJECT_STRUCTURE.md
 TODO.md
 
-# === TOOLS TESTS ===
+# === PYTEST & COVERAGE ===
+.coverage
+.pytest_cache/
+htmlcov/
+
+# === TOOLS TESTS (excluded) ===
 tools/test_*.py
 tools/*_test.py
