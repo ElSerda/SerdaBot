@@ -90,25 +90,25 @@ async def query_model(
                 if response.status_code in [200, 400]:  # 400 = pas de modèle mais endpoint ok
                     print("🔗 [LM STUDIO] Endpoint actif")
 
-                    # Vraie requête vers LM Studio (optimisé pour Twitch)
+                    # Vraie requête vers LM Studio (optimisé pour Twitch one-liners)
                     real_payload = {
                         "model": "local-model",
                         "messages": [
                             {
                                 "role": "system",
                                 "content": (
-                                    "Bot Twitch FR. Réponds en UNE phrase max (12-25 mots). "
-                                    "Ton fun et complice. Pas d'auto-flatterie. 0-2 émojis max. "
-                                    "Pas de listes, pas de !!!, pas de citations longues."
+                                    "Bot Twitch FR, UNE phrase (12-25 mots), ton fun/complice, "
+                                    "pas de /me, 0-2 émojis, pas d'auto-flatterie."
                                 )
                             },
                             {"role": "user", "content": prompt}
                         ],
-                        "max_tokens": 60,
+                        "max_tokens": 50,
                         "temperature": 0.7,
+                        "top_k": 40,
                         "top_p": 0.9,
-                        "presence_penalty": 0.6,
-                        "frequency_penalty": 0.4,
+                        "min_p": 0.05,
+                        "repeat_penalty": 1.10,
                         "stop": ["\n", "User:", "Assistant:", "@"]
                     }
 

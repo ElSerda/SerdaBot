@@ -6,16 +6,39 @@ Ce fichier documente les **paramètres optimaux** pour LM Studio avec SerdaBot.
 
 ## 📋 Paramètres recommandés
 
-### **Model Settings** (onglet "Model" dans LM Studio)
+### **Preset "Punchline Twitch FR" (par défaut)**
 
 ```yaml
 Temperature:         0.7
-Top P:               0.9
-Top K:               40-100 (si disponible)
-Max Tokens:          60
-Presence Penalty:    0.6
-Frequency Penalty:   0.4
+Top-K:               40
+Top-P:               0.9
+Min-P:               0.05
+Repeat Penalty:      1.10
+Max Tokens:          50
+Limit response:      ON
 Stop Sequences:      ["\n", "User:", "Assistant:", "@"]
+```
+
+### **Preset "Chill/Hello" (salutations, moins d'aléa)**
+
+```yaml
+Temperature:         0.6
+Top-K:               40
+Top-P:               0.85
+Min-P:               0.05
+Repeat Penalty:      1.15
+Max Tokens:          50
+```
+
+### **Preset "Hype" (quand le chat spam :hype)**
+
+```yaml
+Temperature:         0.8
+Top-K:               60
+Top-P:               0.92
+Min-P:               0.05
+Repeat Penalty:      1.05
+Max Tokens:          50
 ```
 
 ---
@@ -24,37 +47,38 @@ Stop Sequences:      ["\n", "User:", "Assistant:", "@"]
 
 ### **Temperature (0.7)**
 - Contrôle la créativité du modèle
-- `0.3` = Très prévisible, répétitif
-- `0.7` = **Équilibré** (recommandé pour Twitch)
-- `1.0+` = Trop aléatoire, incohérent
+- `0.6` = Plus safe, moins d'impro (Chill/Hello)
+- `0.7` = **Équilibré** (recommandé par défaut)
+- `0.8` = Plus fun, plus piquant (Hype mode)
 
-### **Top P (0.9)**
-- Sélectionne les 90% meilleurs tokens
-- Évite les choix trop improbables
-- Garde une bonne diversité
+### **Top-K (40)**
+- Limite aux 40 meilleurs tokens
+- Coupe les choix improbables
+- Montez à 60 pour mode Hype
 
-### **Top K (40-100)**
-- Limite aux K meilleurs tokens
-- Complémentaire à Top P
-- Réduit encore plus l'aléatoire
+### **Top-P (0.9)**
+- Sélectionne les 90% meilleurs tokens (cumul de probabilité)
+- Complémentaire à Top-K
+- `0.85` = Plus strict, `0.92` = Plus varié
 
-### **Max Tokens (60)**
-- Limite la longueur des réponses
-- **60 tokens ≈ 12-25 mots** (parfait pour Twitch)
-- Réduit la latence sur machines lentes
+### **Min-P (0.05)**
+- Coupe les "queues bizarres" de probabilité
+- Laisse TOUJOURS activé !
+- Évite les tokens vraiment improbables
 
-### **Presence Penalty (0.6)**
-- Pénalise la **répétition d'idées**
-- Évite : "Je suis gentil. Je suis toujours gentil."
-- Force le modèle à varier ses concepts
+### **Repeat Penalty (1.10)**
+- Pénalise la répétition de tokens
+- `1.10` = Équilibré
+- `1.15` = Si le bot radote trop
+- `1.05` = Mode Hype (peut répéter pour emphase)
 
-### **Frequency Penalty (0.4)**
-- Pénalise la **répétition de mots**
-- Évite : "incroyable incroyable incroyable"
-- Rend les réponses plus naturelles
+### **Max Tokens (50)**
+- **50 tokens ≈ 12-25 mots** (parfait pour Twitch one-liner)
+- Réduit la latence sur GTX 780
+- Plus fiable que "Limit response length" seul
 
 ### **Stop Sequences**
-- `\n` : Coupe à la première ligne (1 phrase max)
+- `\n` : Coupe à la première ligne (garantit 1 phrase)
 - `User:` / `Assistant:` : Évite que le modèle simule un dialogue
 - `@` : Évite les mentions intempestives
 
@@ -77,10 +101,15 @@ Stop Sequences:      ["\n", "User:", "Assistant:", "@"]
 ## 📝 System Prompt utilisé par le bot
 
 ```
-Bot Twitch FR. Réponds en UNE phrase max (12-25 mots).
-Ton fun et complice. Pas d'auto-flatterie. 0-2 émojis max.
-Pas de listes, pas de !!!, pas de citations longues.
+Bot Twitch FR, UNE phrase (12-25 mots), ton fun/complice,
+pas de /me, 0-2 émojis, pas d'auto-flatterie.
 ```
+
+**Pourquoi ce format strict ?**
+- ✅ Force des réponses courtes (Twitch = latence critique)
+- ✅ Évite les pavés et les listes
+- ✅ Bloque l'auto-congratulation ("ma liste de qualités incroyables...")
+- ✅ Ton léger et fun, pas corporate
 
 ---
 
