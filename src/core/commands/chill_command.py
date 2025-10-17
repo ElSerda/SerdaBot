@@ -21,6 +21,29 @@ def truncate_response(response: str, limit: int = 500) -> str:
     return response[:limit].strip() + "…"
 
 
+def filter_generic_responses(response: str) -> str:
+    """Filter out generic/cringe AI phrases and make responses punchier."""
+    # Liste de phrases génériques à éviter (auto-congratulation)
+    generic_phrases = [
+        "je vais devoir ajouter",
+        "ma liste de qualités",
+        "ma longue liste",
+        "quelqu'un doit bien le faire",
+        "c'est mon travail",
+        "je suis là pour",
+        "mes capacités incroyables",
+        "fantastique",
+    ]
+    
+    # Si la réponse contient des phrases génériques, on la rejette (retourne vide)
+    response_lower = response.lower()
+    for phrase in generic_phrases:
+        if phrase in response_lower:
+            return ""  # Force un retry ou fallback
+    
+    return response
+
+
 async def handle_chill_command(message: Message, config: dict, now):  # pylint: disable=unused-argument
     """Handle chill command with sarcastic AI responses."""
     botname = config["bot"]["name"].lower()
@@ -66,7 +89,15 @@ async def handle_chill_command(message: Message, config: dict, now):  # pylint: 
         await message.channel.send("🤷 Réponse manquante.")
         return
 
-    final = truncate_response(response.strip())
+    # Filtre anti-générique
+    filtered = filter_generic_responses(response.strip())
+    if not filtered:
+        if debug:
+            print(f"[CHILL] ⚠️ Réponse générique filtrée: {response[:50]}...")
+        # Fallback simple si la réponse est trop générique
+        filtered = "🤔 Hmm, laisse-moi réfléchir à ça..."
+
+    final = truncate_response(filtered)
     await message.channel.send(final)
 
     if debug:
