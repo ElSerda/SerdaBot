@@ -1,47 +1,47 @@
 """Tests for prompt_loader module."""
 
-import pytest
-
-from prompts.prompt_loader import load_prompt_template
+from prompts.prompt_loader import load_system_prompt, make_prompt
 
 
-class TestLoadPromptTemplate:
-    """Tests for prompt template loading."""
+class TestPromptLoader:
+    """Tests for new prompt system."""
 
-    def test_load_ask_prompt_fr(self):
-        """Test loading French ask prompt."""
-        prompt = load_prompt_template('ask', 'fr')
+    def test_load_system_prompt(self):
+        """Test loading system prompt."""
+        prompt = load_system_prompt()
         assert prompt is not None
         assert len(prompt) > 0
         assert isinstance(prompt, str)
+        assert "serda_bot" in prompt.lower()
 
-    def test_load_ask_prompt_en(self):
-        """Test loading English ask prompt."""
-        prompt = load_prompt_template('ask', 'en')
+    def test_make_prompt_ask(self):
+        """Test making ask prompt."""
+        prompt = make_prompt('ask', 'Quelle heure est-il?', 'viewer123')
         assert prompt is not None
-        assert len(prompt) > 0
-        assert isinstance(prompt, str)
+        assert 'Mode: ask' in prompt
+        assert 'Quelle heure est-il?' in prompt
 
-    def test_load_chill_prompt_fr(self):
-        """Test loading French chill prompt."""
-        prompt = load_prompt_template('chill', 'fr')
+    def test_make_prompt_chill(self):
+        """Test making chill prompt."""
+        prompt = make_prompt('chill', 'Salut!', 'viewer456')
         assert prompt is not None
-        assert len(prompt) > 0
+        assert 'Mode: chill' in prompt
+        assert 'Salut!' in prompt
 
-    def test_load_game_prompt_fr(self):
-        """Test loading French game prompt."""
-        prompt = load_prompt_template('game', 'fr')
+    def test_make_prompt_trad(self):
+        """Test making trad prompt."""
+        prompt = make_prompt('trad', 'Hello world', 'viewer789')
         assert prompt is not None
-        assert len(prompt) > 0
+        assert 'Traduis' in prompt or 'Hello world' in prompt
 
-    def test_fallback_to_fr_when_lang_not_exists(self):
-        """Test fallback to French when language doesn't exist."""
-        # 'es' (Spanish) doesn't exist, should fallback to 'fr'
-        prompt = load_prompt_template('ask', 'es')
-        assert prompt is not None
-        assert len(prompt) > 0
+    def test_make_prompt_with_roast(self):
+        """Test making prompt with roast user."""
+        # el_serda est dans roast.json par défaut
+        prompt = make_prompt('chill', 'Test', 'el_serda')
+        assert 'Roast' in prompt or 'el_serda' in prompt
 
-    def test_invalid_prompt_type_raises_error(self):
-        """Test that invalid prompt type raises an error."""
-        with pytest.raises((FileNotFoundError, RuntimeError)):
-            load_prompt_template('nonexistent_type', 'fr')
+    def test_make_prompt_with_game_context(self):
+        """Test making prompt with game context."""
+        prompt = make_prompt('reactor', 'LUL', 'viewer', 'Valorant', 'Ranked')
+        assert 'Valorant' in prompt or 'LUL' in prompt
+

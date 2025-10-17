@@ -1,7 +1,7 @@
 """Prompt loading and building utilities for SerdaBot."""
 
 import os
-from typing import Optional
+from typing import Optional, Sequence
 
 from cogs.roast_manager import DEFAULT_PATH, load_roast_config
 
@@ -11,6 +11,37 @@ _SYSTEM_PROMPT: Optional[str] = None
 
 # === ROAST CONFIG (cache rechargeable) ===
 _roast_cache = load_roast_config(DEFAULT_PATH)
+
+# === MODE STYLES (ultra légers) ===
+MODE_STYLES = {
+    "chill": "Ton complice et décontracté.",
+    "ask": "Ton clair et direct.",
+    "trad": "Traduis en français naturel.",
+    "reactor": "Réagis à la hype liée au jeu.",
+}
+
+# Budget pour garder le prompt USER compact
+USER_BUDGET = 180  # chars max pour le user prompt
+
+
+def _clip(s: str, n: int) -> str:
+    """Coupe proprement une string à n chars."""
+    return s if len(s) <= n else s[: max(0, n - 1)].rstrip() + "…"
+
+
+def _join_short_quotes(quotes: Sequence[str], max_quotes: int = 3, per_quote_max: int = 28) -> str:
+    """Joint max 3 quotes courtes (28 chars max chacune)."""
+    if not quotes:
+        return ""
+    short = []
+    for q in quotes:
+        q = q.strip().strip('«»"\' ').replace("\n", " ")
+        if not q:
+            continue
+        short.append(_clip(q, per_quote_max))
+        if len(short) >= max_quotes:
+            break
+    return " | ".join(short)
 
 
 def reload_roast_config(path: str = DEFAULT_PATH):
@@ -38,71 +69,52 @@ def make_prompt(
     title: Optional[str] = None
 ) -> str:
     """
-    Build the 'user' prompt to send to LM Studio.
-    Includes dynamic roast logic based on roast.json config.
+    Build compact USER prompt with budget control (no overload).
     
     Args:
-        mode: Command type ('ask', 'chill', 'trad', 'reactor', etc.)
+        mode: Command type ('ask', 'chill', 'trad', 'reactor')
         content: User message content
         user: Username who sent the message
         game: Current game being played (optional)
         title: Stream title (optional)
     
     Returns:
-        Formatted user prompt string
+        Formatted user prompt string (≤180 chars target)
     """
-    base = f"Contexte: Jeu={game or 'inconnu'}, Titre={title or '-'}.\n"
+    mode = (mode or "chill").lower()
+    game = game or "inconnu"
+    title = title or "-"
     
-    # Dynamic roast detection (not hardcoded!)
+    # Base: Mode + Jeu + Titre + Style + Message
+    parts = [
+        f"Mode: {mode}.",
+        f"Jeu: {game}.",
+        f"Titre: {title}.",
+        MODE_STYLES.get(mode, ""),
+        f"Viewer «{content}».",
+    ]
+    
+    # Roast compact si user éligible
     roast_users = {u.lower() for u in _roast_cache.get("users", [])}
     quotes = _roast_cache.get("quotes", [])
+    is_roast = user.lower() in roast_users
     
-    if user.lower() in roast_users:
-        base += (
-            f"Le message vient de ton créateur/roast-target ({user}). "
-            "Active un roast taquin (jamais méchant). "
-        )
-        if quotes:
-            # Inject up to 8 quotes for context
-            joined = " | ".join(quotes[:8])
-            base += f"Tu peux t'inspirer de ses excuses/citations: {joined}.\n"
+    if is_roast:
+        parts.append(f"Roast {user}: taquin, drôle, jamais méchant.")
+        rq = _join_short_quotes(quotes, max_quotes=3, per_quote_max=28)
+        if rq:
+            parts.append(f"Réf. possibles: {rq}.")
     
-    # Command-specific prompts
-    if mode == "ask":
-        base += f"Question du viewer: «{content}». Réponds clairement, en 1 phrase, sans détour."
-    elif mode == "chill":
-        base += f"Viewer dit: «{content}». Réponds sur un ton complice et fun."
-    elif mode == "trad":
-        base += f"Texte à traduire: «{content}». Traduis naturellement en français courant du chat Twitch."
-    elif mode == "reactor":
-        base += (
-            f"Le chat spam «{content}». Réagis avec une phrase drôle et en lien avec {game or 'le jeu'}, "
-            "comme si tu participais à la hype collective."
-        )
-    else:
-        base += f"Message: «{content}». Réponds naturellement, comme dans une conversation de stream."
+    parts.append("Réponds dans ton style habituel, une phrase unique.")
+    user_prompt = " ".join(p for p in parts if p)
     
-    return base.strip()
+    # Budget control: clip proprement si > 180 chars
+    if len(user_prompt) > USER_BUDGET:
+        # Garde Mode + Jeu + Titre (prioritaires)
+        head = " ".join(parts[:3])
+        tail = " ".join(parts[3:])
+        allowed = max(0, USER_BUDGET - len(head) - 1)
+        user_prompt = head + " " + _clip(tail, allowed)
+    
+    return user_prompt
 
-
-def load_prompt_template(name, lang='en'):
-    """
-    DEPRECATED: Legacy function for backward compatibility.
-    Use make_prompt() instead for new code.
-    """
-    # Fallback pour les anciens fichiers de prompt s'ils existent encore
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    filename = f'prompt_{name}_{lang}.txt'
-    path = os.path.join(current_dir, filename)
-
-    if not os.path.isfile(path):
-        fallback_path = os.path.join(current_dir, f'prompt_{name}_en.txt')
-        if os.path.isfile(fallback_path):
-            path = fallback_path
-        else:
-            raise FileNotFoundError(
-                f'Prompt file not found: {path} or fallback {fallback_path}'
-            )
-
-    with open(path, 'r', encoding='utf-8') as f:
-        return f.read()

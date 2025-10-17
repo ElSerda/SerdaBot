@@ -5,8 +5,6 @@ from datetime import datetime, timedelta
 
 import httpx
 
-from prompts.prompt_loader import load_prompt_template
-
 
 def estimate_tokens(text: str) -> int:
     """Estime le nombre de tokens (approximatif: ~4 chars = 1 token pour FR/EN)"""
@@ -15,28 +13,6 @@ def estimate_tokens(text: str) -> int:
 # Cache des endpoints down (évite de retenter inutilement)
 _failed_endpoints = {}
 _CACHE_DURATION = timedelta(minutes=2)  # Retest après 2 min
-
-
-def build_ask_prompt(user: str, question: str, max_length: int = 500) -> str:  # pylint: disable=unused-argument
-    """Builds a clean prompt for an !ask command using the ask template."""
-    try:
-        template = load_prompt_template('ask', 'fr')
-        prompt = template.replace('{question}', question.strip())
-        prompt = prompt.replace('{max_length}', str(max_length))
-        return prompt
-    except (RuntimeError, ValueError, KeyError) as e:
-        print(f"[ASK_UTILS] ⚠️ Erreur chargement template: {e}")
-        # Fallback basique
-        fallback = (
-            "<|im_start|>system\nRéponds à la question de manière concise.<|im_end|>\n"
-            f"<|im_start|>user\n{question}<|im_end|>\n<|im_start|>assistant\n"
-        )
-        return fallback
-
-
-def get_max_length(prefix: str, suffix: str, limit: int = 500) -> int:
-    """Calculates available character space for content between prefix and suffix."""
-    return max(0, limit - len(prefix) - len(suffix))
 
 
 async def call_model(
