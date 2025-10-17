@@ -15,7 +15,7 @@ Write-Host "[INFO] Activation de l'environnement virtuel..." -ForegroundColor Ye
 
 # === Lancer le bot ===
 Write-Host "[OK] Demarrage du bot Twitch..." -ForegroundColor Green
-$env:PYTHONPATH = "."
+$env:PYTHONPATH = ".;src"
 python src/chat/twitch_bot.py
 
 # === Fin ===
