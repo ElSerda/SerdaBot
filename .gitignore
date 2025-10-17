@@ -58,7 +58,6 @@ stress_test.py
 MIGRATION_*.md
 TRANSLATION_SIMPLE.md
 TRANSLATION_SYSTEM.md
-config.sample.yaml
 CHECKUP_*.md
 RELEASE_*.md
 PROJECT_STRUCTURE.md

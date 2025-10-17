@@ -1,0 +1,41 @@
+# Bot Configuration Template (SerdaBot)
+
+bot:
+  language: "fr"                            # Default language ("en" or "fr")
+  name: "your_bot_name"                        # Name of the bot (e.g., my_awesome_bot)
+  channel: "your_channel_name"             # Twitch channel name (no @)
+  model_path: "src/model"                   # Path to local model folder
+  model_file: "your-model.gguf"             # GGUF model filename
+  model_type: "openai"                      # Model type ("mistral", "llama", "openai", etc.)
+  openai_model: "gpt-3.5-turbo"             # OpenAI model to use
+  use_gpu: true                             # Enable GPU acceleration (true/false)
+  gpu_layers: 50                            # Number of layers to run on GPU
+  cooldown: 10                              # Cooldown between responses (in seconds) - augmenté pour bot non vérifié
+  model_endpoint: http://127.0.0.1:1234/v1/chat/completions  # LM Studio endpoint
+  api_url: http://127.0.0.1:1234/v1/chat/completions       # LM Studio API endpoint
+  log_ia: true                              # Enable AI logging (debugging)
+  debug: true                               # Verbose output for debugging
+  translation: libretranslate              # Use "model" or "libretranslate"
+  kofi_url: "https://ko-fi.com/your_username"    # URL Ko-fi pour les donations
+  donation_message: "☕ Merci pour le support ! Tu peux soutenir [YourName] ici : {kofi_url} 💜"
+
+  enabled_commands:
+    - game
+    - chill
+    - ask
+    - trad
+
+openai:
+  api_key: "sk-proj-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"       # Your OpenAI API key (get it from platform.openai.com)
+
+twitch:
+  client_id: "7lldooh77jv5j7jqpzufv5cc9aoiqb"
+  client_secret: "vo83812s1imvfsfydyd521iz0k3xjl"
+  bot_id: "your_bot_user_id_here"
+
+igdb:
+  client_id: "your_igdb_client_id_here"
+  client_secret: "your_igdb_client_secret_here"
+
+rawg:
+  api_key: "your_rawg_api_key_here"
