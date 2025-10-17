@@ -57,8 +57,11 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
         self._display_model_config()
         print("☕️ Boot complete.")
         print("🤖 SerdaBot is online and ready.")
-        if self.connected_channels:
-            await self.safe_send(self.connected_channels[0], "C'est ici les précoces ? ☕")
+        
+        # Send connect message if configured
+        connect_message = self.config["bot"].get("connect_message", "").strip()
+        if connect_message and self.connected_channels:
+            await self.safe_send(self.connected_channels[0], connect_message)
 
     def _display_model_config(self):
         """Affiche la configuration du modèle au démarrage.

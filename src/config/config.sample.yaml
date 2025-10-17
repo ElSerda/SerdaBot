@@ -19,6 +19,7 @@ bot:
   translation: libretranslate              # Use "model" or "libretranslate"
   kofi_url: "https://ko-fi.com/your_username"    # URL Ko-fi pour les donations
   donation_message: "☕ Merci pour le support ! Tu peux soutenir [YourName] ici : {kofi_url} 💜"
+  connect_message: "C'est ici les précoces ? ☕"  # Message envoyé à la connexion (vide = désactivé)
 
   enabled_commands:
     - game
