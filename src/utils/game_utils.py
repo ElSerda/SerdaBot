@@ -56,15 +56,25 @@ def format_date(ts: int) -> str:
 
 
 async def fetch_steam_summary(game_name: str, config: dict):
+    """
+    Récupère le résumé d'un jeu depuis Steam.
+    TODO: Implémenter l'intégration Steam API.
+    Pour l'instant, retourne une chaîne vide.
+    """
     try:
-        from utils.steam import search_steam_summary
-
-        result = await search_steam_summary(game_name, config)
-        if result:
-            print(f"[METRICS-GAME] 📥 Steam: {len(result)} chars summary")
-        else:
-            print("[METRICS-GAME] ⚠️ Steam: aucun résumé trouvé")
-        return result
+        # TODO: Décommenter quand steam.py sera implémenté
+        # from utils.steam import search_steam_summary
+        # result = await search_steam_summary(game_name, config)
+        
+        # Placeholder pour Alpha
+        print("[METRICS-GAME] ⚠️ Steam: Non implémenté (placeholder)")
+        return ""
+        
+        # if result:
+        #     print(f"[METRICS-GAME] 📥 Steam: {len(result)} chars summary")
+        # else:
+        #     print("[METRICS-GAME] ⚠️ Steam: aucun résumé trouvé")
+        # return result
     except Exception as e:
         print(f"[METRICS-GAME] ❌ Steam error: {e}")
         return ""
