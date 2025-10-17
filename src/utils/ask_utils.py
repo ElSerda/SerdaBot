@@ -40,9 +40,14 @@ def get_max_length(prefix: str, suffix: str, limit: int = 500) -> int:
 
 
 async def call_model(
-    prompt: str, config: dict, user: str | None = None, timeout: int = 3
+    prompt: str, config: dict, user: str | None = None, timeout: int | None = None
 ) -> str:
     """Queries the model using the configured endpoint with fallback."""
+    
+    # Récupérer le timeout depuis la config ou utiliser 10s par défaut
+    effective_timeout: int = timeout if timeout is not None else config.get("bot", {}).get("model_timeout", 10)
+    
+    print(f"[ASK_UTILS] ⏱️ Timeout configuré: {effective_timeout}s")
 
     # Nettoyer le cache des endpoints expirés
     now = datetime.now()
@@ -55,7 +60,7 @@ async def call_model(
     api_url = config["bot"].get("model_endpoint") or config["bot"].get("api_url")
     if api_url and "1234" in api_url and api_url not in _failed_endpoints:
         print("[ASK_UTILS] 🔗 Tentative LM Studio...")
-        result = await try_endpoint(api_url, prompt, user, timeout, "lm_studio")
+        result = await try_endpoint(api_url, prompt, user, effective_timeout, "lm_studio")
         if result:
             return result
         _failed_endpoints[api_url] = now
@@ -63,11 +68,11 @@ async def call_model(
     elif api_url in _failed_endpoints:
         print("[ASK_UTILS] ⏭️ LM Studio skip (down)")
 
-    # === PRIORITÉ 2: DeadBot FastAPI local (port 8080) ===
-    deadbot_api = "http://127.0.0.1:8080/prompt"
+        # === PRIORITÉ 2: DeadBot ===
+    deadbot_api = "http://127.0.0.1:5001/chat"
     if deadbot_api not in _failed_endpoints:
         print("[ASK_UTILS] 🔗 Tentative DeadBot...")
-        result = await try_endpoint(deadbot_api, prompt, user, timeout, "deadbot")
+        result = await try_endpoint(deadbot_api, prompt, user, effective_timeout, "deadbot")
         if result:
             return result
         _failed_endpoints[deadbot_api] = now
