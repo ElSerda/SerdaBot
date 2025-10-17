@@ -75,6 +75,14 @@ Checklist des erreurs et améliorations à faire avant la release publique.
   - Si `bot_whitelist.json` manque, crash
   - Solution : Créer fichiers vides si absents
 
+- [ ] **Code Quality (Pylint)** : Exceptions trop générales dans plusieurs fichiers
+  - `src/core/igdb_api.py` : 1x `except Exception`
+  - `src/utils/log.py` : 1x `except Exception`
+  - `src/utils/game_utils.py` : 3x `except Exception`
+  - `src/utils/translator.py` : 1x `except Exception`
+  - `src/utils/llm.py` : 4x `except Exception` + 1x `import traceback`
+  - Solution : Remplacer par exceptions spécifiques (non bloquant pour Alpha)
+
 ---
 
 ## 🚀 Améliorations Possibles (Post-Alpha)
@@ -179,10 +187,16 @@ Cette version est une **preview technique** pour early adopters.
 |----------|--------|---------------|
 | Tests | 68/68 ✅ | 100+ |
 | Coverage | 27% | 40%+ |
-| Bugs P1 | 3 🔴 | 0 |
+| Bugs P1 | 2 � | 0 |
 | Bugs P2 | 3 🟡 | 1 max |
+| Bugs P3 | 3 🔵 | 5 max |
 | Platforms | 3 ✅ | 3 |
+| Pylint Warnings | ~12 🟡 | 0 |
 | Users | 0 | 50+ |
+
+**Bugs corrigés récemment :**
+- ✅ Steam API (désactivé proprement)
+- ✅ Pylint warnings dans `chill_command.py` (5 corrigés)
 
 ---
 
