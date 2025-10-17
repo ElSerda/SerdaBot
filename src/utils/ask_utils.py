@@ -43,10 +43,10 @@ async def call_model(
     prompt: str, config: dict, user: str | None = None, timeout: int | None = None
 ) -> str:
     """Queries the model using the configured endpoint with fallback."""
-    
+
     # Récupérer le timeout depuis la config ou utiliser 10s par défaut
     effective_timeout: int = timeout if timeout is not None else config.get("bot", {}).get("model_timeout", 10)
-    
+
     print(f"[ASK_UTILS] ⏱️ Timeout configuré: {effective_timeout}s")
 
     # Nettoyer le cache des endpoints expirés

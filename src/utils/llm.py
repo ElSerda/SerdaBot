@@ -69,16 +69,16 @@ async def query_model(
     if external_endpoint:
         try:
             import httpx
-            
+
             # Test rapide LM Studio
             test_payload = {"model": "test", "messages": [{"role": "user", "content": "test"}], "max_tokens": 1}
-            
+
             with httpx.Client(timeout=3) as client:
                 response = client.post(external_endpoint, json=test_payload)
-                
+
                 if response.status_code in [200, 400]:  # 400 = pas de modèle mais endpoint ok
                     print(f"🔗 [LM STUDIO] Endpoint actif")
-                    
+
                     # Vraie requête vers LM Studio
                     real_payload = {
                         "model": "local-model",
@@ -89,15 +89,15 @@ async def query_model(
                         "max_tokens": 400,
                         "temperature": 0.7
                     }
-                    
+
                     real_response = client.post(external_endpoint, json=real_payload)
                     if real_response.status_code == 200:
                         result = real_response.json()
                         return result['choices'][0]['message']['content'].strip()
-                        
+
         except Exception:
             print("⚠️ [FALLBACK] LM Studio indisponible")
-    
+
     print("🌐 [FALLBACK] Utilisation d'OpenAI...")
     model_type = config['bot'].get('model_type', 'mistral')
 
@@ -105,17 +105,17 @@ async def query_model(
     if model_type == 'openai':
         if not OPENAI_AVAILABLE:
             return '❌ OpenAI non disponible. Installez avec: pip install openai'
-        
+
         if OPENAI_CLIENT is None:
             api_key = config.get('openai', {}).get('api_key')
             if not api_key or api_key == 'your_openai_api_key_here':
                 return '❌ Clé OpenAI manquante dans config.yaml'
             OPENAI_CLIENT = AsyncOpenAI(api_key=api_key)
-        
+
         try:
             start = time.time()
             openai_model = config['bot'].get('openai_model', 'gpt-3.5-turbo')
-            
+
             # Parser le format ChatML si présent
             messages = []
             if '<|im_start|>' in prompt:
@@ -134,30 +134,30 @@ async def query_model(
                     {"role": "system", "content": "Tu es un assistant Twitch sympa et concis. Réponds en français de manière courte et engageante."},
                     {"role": "user", "content": prompt}
                 ]
-            
+
             if config.get('debug', False):
                 print(f'[DEBUG] 📝 Messages parsés : {messages}')
-            
+
             response = await OPENAI_CLIENT.chat.completions.create(
                 model=openai_model,
                 messages=messages,
                 max_tokens=400,
                 temperature=0.7
             )
-            
+
             elapsed = round(time.time() - start, 2)
             result = response.choices[0].message.content.strip()
-            
+
             if config.get('debug', False):
                 print(f'[DEBUG] 🤖 OpenAI ({openai_model}) réponse en {elapsed}s')
                 print(f'[DEBUG] ➜ Réponse : {result}')
-            
+
             return result
-            
+
         except Exception as e:
             error_str = str(e).lower()
             print(f'❌ Erreur OpenAI : {e}')
-            
+
             # Gestion spécifique des erreurs courantes
             if 'quota' in error_str or 'insufficient' in error_str or 'billing' in error_str:
                 print('🚨 [FALLBACK] Quota OpenAI épuisé! Passage en mode local...')
@@ -172,17 +172,17 @@ async def query_model(
                         return "⚠️ IA temporairement indisponible. Essayez plus tard !"
                 else:
                     return "⚠️ Quota IA épuisé. Service temporairement indisponible !"
-            
+
             elif 'rate limit' in error_str or 'too many requests' in error_str:
                 return "⚠️ Trop de requêtes. Attendez quelques secondes et réessayez !"
-            
+
             elif 'invalid api key' in error_str or 'authentication' in error_str:
                 print('🚨 [CONFIG] Clé API OpenAI invalide!')
                 return "⚠️ Problème de configuration IA. Contactez l'admin !"
-            
+
             elif 'network' in error_str or 'timeout' in error_str or 'connection' in error_str:
                 return "⚠️ Problème de connexion. Réessayez dans un moment !"
-            
+
             else:
                 import traceback
                 traceback.print_exc()

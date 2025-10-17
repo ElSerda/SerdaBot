@@ -54,7 +54,7 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
         print("☕️ Boot complete.")
         print("🤖 SerdaBot is online and ready.")
         if self.connected_channels:
-            await self.safe_send(self.connected_channels[0], "Plait-il ? ☕")
+            await self.safe_send(self.connected_channels[0], "C'est ici les précoces ? ☕")
 
     def _display_model_config(self):
         """Affiche la configuration du modèle au démarrage.
@@ -140,7 +140,7 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
             getattr(message.author, 'is_mod', False)
             or user == message.channel.name.lower()
         )
-        
+
         # Si c'est un mod qui utilise une commande de gestion, on skip la détection de spam
         is_management_command = is_mod and any(
             cleaned.startswith(cmd) for cmd in [

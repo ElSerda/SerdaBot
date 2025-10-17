@@ -87,7 +87,7 @@ async def handle_game_command(message: Message, config: dict, game_name: str, no
                 input_len = len(summary)
                 input_tokens = input_len // 4  # Estimation: ~4 chars = 1 token
                 print(f"[METRICS-GAME] 🌐 Traduction EN→FR: {input_len} chars (~{input_tokens} tokens)")
-                
+
                 result = translator.translate(summary, source='en', target='fr')
                 if result and not result.startswith('⚠️'):  # Translation succeeded
                     translated = result
@@ -164,12 +164,12 @@ async def handle_game_command(message: Message, config: dict, game_name: str, no
                 translated = translated[:max_chars].strip() + "…"
 
         final = f"{base}{mode_display} :\n{translated}{suffix}"
-        
+
         # Métriques finales
         final_len = len(final)
         final_tokens = final_len // 4
         print(f"[METRICS-GAME] 📤 Message final: {final_len} chars (~{final_tokens} tokens)")
-        
+
         await message.channel.send(final)
 
         if debug:

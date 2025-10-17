@@ -65,11 +65,11 @@ async def fetch_steam_summary(game_name: str, config: dict):
         # TODO: Décommenter quand steam.py sera implémenté
         # from utils.steam import search_steam_summary
         # result = await search_steam_summary(game_name, config)
-        
+
         # Placeholder pour Alpha
         print("[METRICS-GAME] ⚠️ Steam: Non implémenté (placeholder)")
         return ""
-        
+
         # if result:
         #     print(f"[METRICS-GAME] 📥 Steam: {len(result)} chars summary")
         # else:
@@ -83,7 +83,7 @@ async def fetch_steam_summary(game_name: str, config: dict):
 async def fetch_game_data(game_name: str, config: dict) -> dict:
     # Import lazy pour éviter les erreurs lors des tests unitaires
     from core.igdb_api import get_igdb_token, query_game, search_igdb_web
-    
+
     print(f"[METRICS-GAME] 🔍 Recherche: '{game_name}'")
     token = get_igdb_token()
     data = query_game(game_name, token)

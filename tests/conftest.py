@@ -1,8 +1,9 @@
 """Pytest configuration and fixtures for SerdaBot tests."""
 
-import pytest
-from pathlib import Path
 import sys
+from pathlib import Path
+
+import pytest
 
 # Add src to path for imports
 src_path = Path(__file__).parent.parent / "src"
@@ -50,20 +51,20 @@ def mock_message():
         def __init__(self):
             self.name = "test_user"
             self.is_mod = False
-    
+
     class MockChannel:
         def __init__(self):
             self.name = "test_channel"
-        
+
         async def send(self, message):
             """Mock send method."""
             return message
-    
+
     class MockMessage:
         def __init__(self):
             self.author = MockAuthor()
             self.channel = MockChannel()
             self.content = "test message"
             self.echo = False
-    
+
     return MockMessage()
