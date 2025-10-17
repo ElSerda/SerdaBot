@@ -10,3 +10,4 @@ apscheduler
 prometheus_client
 openai
 langdetect
+ctransformers

@@ -1,7 +1,5 @@
 """Tests for prompt_loader module."""
 
-from pathlib import Path
-
 import pytest
 
 from prompts.prompt_loader import load_prompt_template

@@ -47,8 +47,8 @@ class ChatResponse(BaseModel):
 # === Endpoints ===
 @app.post('/chat', response_model=ChatResponse)
 async def chat(req: ChatRequest):
-    response = await query_model(req.prompt, config=CONFIG, user=req.user)
-    log_response(req.user, req.prompt, response, CONFIG)
+    response = await query_model(req.prompt, config=CONFIG)
+    log_response(req.prompt, response, user=req.user)
     return {'response': response}
 
 

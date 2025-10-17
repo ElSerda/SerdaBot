@@ -1,8 +1,11 @@
 """Tests for game_utils module."""
 
-import pytest
-
-from utils.game_utils import clean_summary, compress_platforms, normalize_platforms, sanitize_slug
+from utils.game_utils import (
+    clean_summary,
+    compress_platforms,
+    normalize_platforms,
+    sanitize_slug,
+)
 
 
 class TestNormalizePlatforms:

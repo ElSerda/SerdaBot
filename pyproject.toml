@@ -72,3 +72,29 @@ docstring-code-line-length = "dynamic"  # adapte la largeur aux docstrings envir
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+
+[tool.pylint.main]
+ignore = ["venv", ".venv", "build", "dist", "__pycache__"]
+
+[tool.pylint."messages control"]
+disable = [
+    "C0303",  # trailing-whitespace
+    "C0301",  # line-too-long (géré par black)
+    "C0411",  # wrong-import-order (géré par isort)
+    "C0114",  # missing-module-docstring
+    "C0115",  # missing-class-docstring
+    "C0116",  # missing-function-docstring
+    "W0718",  # broad-exception-caught (on sait, c'est documenté)
+    "C0415",  # import-outside-toplevel (OK pour les tests)
+    "W1514",  # unspecified-encoding (Python 3.10+, pas critique)
+    "W0702",  # bare-except (legacy code, à refactor plus tard)
+    "W0621",  # redefined-outer-name (normal avec pytest fixtures)
+    "E0401",  # import-error (modules optionnels comme ctransformers)
+    "W0603",  # global-statement (singleton MODEL voulu)
+    "W0602",  # global-variable-not-assigned (lecture seule OK)
+    "W1309",  # f-string-without-interpolation (déjà corrigé)
+    "W0511",  # fixme (TODO/FIXME comments OK pour tracking)
+]
+
+[tool.pylint.format]
+max-line-length = 100

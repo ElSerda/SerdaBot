@@ -1,6 +1,4 @@
-"""Tests for clean utility module."""
-
-import pytest
+"""Tests for clean module."""
 
 from utils.clean import clean_response
 

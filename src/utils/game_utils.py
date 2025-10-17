@@ -55,7 +55,7 @@ def format_date(ts: int) -> str:
     return datetime.utcfromtimestamp(ts).strftime("%Y") if ts else "?"
 
 
-async def fetch_steam_summary(game_name: str, config: dict):
+async def fetch_steam_summary():
     """
     Récupère le résumé d'un jeu depuis Steam.
     TODO: Implémenter l'intégration Steam API.
@@ -80,7 +80,7 @@ async def fetch_steam_summary(game_name: str, config: dict):
         return ""
 
 
-async def fetch_game_data(game_name: str, config: dict) -> dict:
+async def fetch_game_data(game_name: str) -> dict:
     # Import lazy pour éviter les erreurs lors des tests unitaires
     from core.igdb_api import get_igdb_token, query_game, search_igdb_web
 
@@ -93,7 +93,7 @@ async def fetch_game_data(game_name: str, config: dict) -> dict:
         print(f"[METRICS-GAME] 📥 IGDB API: {summary_len} chars summary")
         return data
 
-    data = await search_igdb_web(game_name, config)
+    data = await search_igdb_web(game_name)
     if data:
         logging.debug("⚠️ Fallback IGDB web utilisé.")
         summary_len = len(data.get('summary', ''))
@@ -105,7 +105,7 @@ async def fetch_game_data(game_name: str, config: dict) -> dict:
 
 
 async def choose_best_summary(
-    name: str, igdb_summary: str, steam_summary: str
+    igdb_summary: str, steam_summary: str
 ) -> tuple[str, str, str, str]:
     try:
         detected_igdb = detect(igdb_summary) if igdb_summary else "und"

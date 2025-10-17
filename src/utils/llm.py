@@ -2,7 +2,14 @@ import os
 import time
 from typing import Optional
 
-from ctransformers import AutoModelForCausalLM
+# Import ctransformers avec gestion d'erreur (optionnel pour GGUF local)
+try:
+    from ctransformers import AutoModelForCausalLM
+    CTRANSFORMERS_AVAILABLE = True
+except ImportError:
+    CTRANSFORMERS_AVAILABLE = False
+    AutoModelForCausalLM = None
+    print("⚠️ Module 'ctransformers' non installé. Installation avec: pip install ctransformers")
 
 from config.config import load_config
 from utils.clean import clean_response
@@ -24,6 +31,10 @@ CONFIG = load_config()
 def load_model(config: Optional[dict] = None):
     global MODEL
 
+    if not CTRANSFORMERS_AVAILABLE:
+        print("❌ ctransformers non disponible. Impossible de charger un modèle GGUF local.")
+        return
+
     if config is None:
         config = CONFIG
 
@@ -44,7 +55,7 @@ def load_model(config: Optional[dict] = None):
 
     try:
         print(f'📥 Chargement modèle depuis : {full_path}')
-        MODEL = AutoModelForCausalLM.from_pretrained(
+        MODEL = AutoModelForCausalLM.from_pretrained(  # type: ignore
             full_path,
             model_type=config['bot'].get('model_type', 'mistral'),
             gpu_layers=gpu_layers if use_gpu else 0,
@@ -57,7 +68,7 @@ def load_model(config: Optional[dict] = None):
 
 # === Fonction : Requête au modèle ===
 async def query_model(
-    prompt: str, config: Optional[dict] = None, user: Optional[str] = None
+    prompt: str, config: Optional[dict] = None
 ) -> str:
     global MODEL, OPENAI_CLIENT
 
@@ -77,7 +88,7 @@ async def query_model(
                 response = client.post(external_endpoint, json=test_payload)
 
                 if response.status_code in [200, 400]:  # 400 = pas de modèle mais endpoint ok
-                    print(f"🔗 [LM STUDIO] Endpoint actif")
+                    print("🔗 [LM STUDIO] Endpoint actif")
 
                     # Vraie requête vers LM Studio
                     real_payload = {
@@ -138,15 +149,19 @@ async def query_model(
             if config.get('debug', False):
                 print(f'[DEBUG] 📝 Messages parsés : {messages}')
 
+            # Type cast pour satisfaire mypy/pylance
             response = await OPENAI_CLIENT.chat.completions.create(
                 model=openai_model,
-                messages=messages,
+                messages=messages,  # type: ignore
                 max_tokens=400,
                 temperature=0.7
             )
 
             elapsed = round(time.time() - start, 2)
-            result = response.choices[0].message.content.strip()
+            result = response.choices[0].message.content
+            if result is None:
+                return "⚠️ Réponse vide de l'IA"
+            result = result.strip()
 
             if config.get('debug', False):
                 print(f'[DEBUG] 🤖 OpenAI ({openai_model}) réponse en {elapsed}s')
@@ -168,7 +183,7 @@ async def query_model(
                         raw_output = MODEL(prompt, max_new_tokens=400)
                         response = clean_response(''.join(raw_output), max_length=400)
                         return f"🧠 (Local) {response}"
-                    except:
+                    except Exception:
                         return "⚠️ IA temporairement indisponible. Essayez plus tard !"
                 else:
                     return "⚠️ Quota IA épuisé. Service temporairement indisponible !"
@@ -186,7 +201,7 @@ async def query_model(
             else:
                 import traceback
                 traceback.print_exc()
-                return f'⚠️ Service IA temporairement indisponible !'
+                return '⚠️ Service IA temporairement indisponible !'
 
     # === Utilisation du modèle local (ctransformers) ===
     if MODEL is None:

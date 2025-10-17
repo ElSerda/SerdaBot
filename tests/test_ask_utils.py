@@ -1,9 +1,5 @@
 """Tests for ask_utils module."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
-
-import pytest
-
 from utils.ask_utils import build_ask_prompt, estimate_tokens, get_max_length
 
 

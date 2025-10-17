@@ -50,7 +50,7 @@ async def handle_game_command(message: Message, config: dict, game_name: str, no
 
     await message.channel.send("🎮 Recherche du jeu...")
     try:
-        data = await fetch_game_data(game_name, config)
+        data = await fetch_game_data(game_name)
 
         if debug:
             debug_data = {k: v for k, v in data.items() if k != "summary"}
@@ -71,9 +71,9 @@ async def handle_game_command(message: Message, config: dict, game_name: str, no
         igdb_url = f"https://www.igdb.com/games/{sanitize_slug(slug or name)}"
 
         summary_igdb = clean_summary(summary_raw, name)
-        summary_steam = await fetch_steam_summary(name, config)
+        summary_steam = await fetch_steam_summary()
         summary, source, lang_igdb, lang_steam = await choose_best_summary(
-            name, summary_igdb, summary_steam
+            summary_igdb, summary_steam
         )
 
         # Simple language detection and translation using our translator

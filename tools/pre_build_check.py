@@ -4,7 +4,6 @@ pre_build_check.py - Vérifie que le projet est prêt pour un build
 """
 
 import sys
-import os
 from pathlib import Path
 
 ISSUES = []
@@ -92,7 +91,7 @@ def check_secrets():
         ("tokens.json", ".tio.tokens.json"),
     ]
     
-    for name, path in sensitive_patterns:
+    for _, path in sensitive_patterns:
         if Path(path).exists():
             WARNINGS.append(f"⚠️ Fichier sensible présent: {path} (ne sera pas inclus dans build)")
 

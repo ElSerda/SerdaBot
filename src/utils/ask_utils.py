@@ -217,4 +217,3 @@ async def try_openai_fallback(
     except (RuntimeError, ValueError, KeyError, TypeError) as e:
         print(f"[ASK_UTILS] ❌ OpenAI fallback failed: {e}")
         return "💀 SerdaBot en mode survie ! Tous mes cerveaux sont KO. Revenez dans 2 min ! 🔄"
-

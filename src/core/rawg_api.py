@@ -24,7 +24,7 @@ def query_rawg_game(game_name, config):
     results = res.json().get('results')
 
     if not results:
-        raise Exception(f'Aucun résultat trouvé dans RAWG pour: {game_name}')
+        raise ValueError(f'Aucun résultat trouvé dans RAWG pour: {game_name}')
 
     game = results[0]
     data = {

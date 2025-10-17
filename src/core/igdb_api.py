@@ -70,7 +70,7 @@ def query_game(game_name, token):
 
 
 # 🌐 Fallback web scraping (simple)
-async def search_igdb_web(name: str, config: dict) -> dict | None:
+async def search_igdb_web(name: str) -> dict | None:
     """
     Recherche un jeu sur le site IGDB et extrait les infos clés en fallback.
     """
