@@ -29,7 +29,38 @@ Mentionne `@serda_bot` dans un message pour obtenir une réponse sarcastique à 
 
 ## 🛡️ Commandes Modérateur (MOD Only)
 
-### 📝 Gestion des Devs (Whitelist Traduction Auto)
+### � Gestion des Roasts (Système Dynamique)
+
+#### `!addroast @username`
+Ajoute un utilisateur à la liste des cibles de roast.
+- Le bot détectera automatiquement cet utilisateur et activera le mode roast
+- **Exemple** : `!addroast @el_serda`
+
+#### `!delroast @username`
+Retire un utilisateur de la liste de roast.
+- **Exemple** : `!delroast @el_serda`
+
+#### `!listroast`
+Affiche la liste complète des utilisateurs roastables.
+- **Exemple de sortie** : `Roastables (3): el_serda, serda, elserda…`
+
+#### `!addquote <phrase>`
+Ajoute une citation/excuse typique d'un utilisateur roastable.
+- Ces citations sont injectées dans le prompt pour inspirer le bot
+- **Exemple** : `!addquote J'avais dit 'juste un dernier run' il y a 3 heures`
+- **Limite** : 180 caractères max
+
+#### `!delquote <index>`
+Supprime une citation par son index (voir `!listquotes`).
+- **Exemple** : `!delquote 2`
+
+#### `!listquotes`
+Affiche les citations enregistrées avec leurs index.
+- **Exemple de sortie** : `Quotes: [0] J'avais dit 'juste un dern… | [1] Le café c'est de l'eau… (+3 de plus)`
+
+---
+
+### �📝 Gestion des Devs (Whitelist Traduction Auto)
 
 #### `!adddev @username`
 Ajoute un utilisateur à la whitelist de traduction automatique.
@@ -136,19 +167,24 @@ bot:
 | Type | Nombre de commandes |
 |------|---------------------|
 | **Publiques** | 4 |
-| **Modérateur** | 15 |
-| **TOTAL** | **19 commandes** |
+| **Modérateur (Roast)** | 6 |
+| **Modérateur (Devs)** | 3 |
+| **Modérateur (Sites)** | 3 |
+| **Modérateur (Bots)** | 6 |
+| **Modérateur (Traduction)** | 2 |
+| **TOTAL** | **24 commandes** |
 
 ---
 
 ## 🗂️ Fichiers de Données
 
-Les listes sont sauvegardées dans `data/` :
-- `devs.json` - Whitelist devs pour traduction auto
-- `blocked_sites.json` - Sites/mots-clés bloqués (anti-spam)
-- `bot_whitelist.json` - Bots à ne pas répondre
-- `bot_blacklist.json` - Bots à ignorer complètement
+Les listes sont sauvegardées dans `data/` et `config/` :
+- `config/roast.json` - Cibles de roast + citations (nouveau !)
+- `data/devs.json` - Whitelist devs pour traduction auto
+- `data/blocked_sites.json` - Sites/mots-clés bloqués (anti-spam)
+- `data/bot_whitelist.json` - Bots à ne pas répondre
+- `data/bot_blacklist.json` - Bots à ignorer complètement
 
 ---
 
-*Dernière mise à jour : 16 octobre 2025*
+*Dernière mise à jour : 18 octobre 2025*

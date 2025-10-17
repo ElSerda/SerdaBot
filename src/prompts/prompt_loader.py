@@ -3,9 +3,20 @@
 import os
 from typing import Optional
 
+from cogs.roast_manager import DEFAULT_PATH, load_roast_config
+
 
 # === SYSTEM PROMPT (chargé une seule fois) ===
 _SYSTEM_PROMPT: Optional[str] = None
+
+# === ROAST CONFIG (cache rechargeable) ===
+_roast_cache = load_roast_config(DEFAULT_PATH)
+
+
+def reload_roast_config(path: str = DEFAULT_PATH):
+    """Reload roast configuration from disk (call after !addroast/!delroast)."""
+    global _roast_cache
+    _roast_cache = load_roast_config(path)
 
 
 def load_system_prompt() -> str:
@@ -28,7 +39,7 @@ def make_prompt(
 ) -> str:
     """
     Build the 'user' prompt to send to LM Studio.
-    Includes easter egg logic if user is El_Serda.
+    Includes dynamic roast logic based on roast.json config.
     
     Args:
         mode: Command type ('ask', 'chill', 'trad', 'reactor', etc.)
@@ -42,13 +53,19 @@ def make_prompt(
     """
     base = f"Contexte: Jeu={game or 'inconnu'}, Titre={title or '-'}.\n"
     
-    # Easter egg for bot creator
-    if user.lower() in ("el_serda", "serda", "el-serda", "elserda"):
+    # Dynamic roast detection (not hardcoded!)
+    roast_users = {u.lower() for u in _roast_cache.get("users", [])}
+    quotes = _roast_cache.get("quotes", [])
+    
+    if user.lower() in roast_users:
         base += (
-            f"Le message vient de ton créateur ({user}). "
-            "Active ton mode 'roast' : réponds avec humour, taquin ou sarcastique, "
-            "mais jamais méchant. Garde ton style Twitch francophone.\n"
+            f"Le message vient de ton créateur/roast-target ({user}). "
+            "Active un roast taquin (jamais méchant). "
         )
+        if quotes:
+            # Inject up to 8 quotes for context
+            joined = " | ".join(quotes[:8])
+            base += f"Tu peux t'inspirer de ses excuses/citations: {joined}.\n"
     
     # Command-specific prompts
     if mode == "ask":

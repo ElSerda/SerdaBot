@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 
 from twitchio.ext import commands  # type: ignore
 
+from src.cogs.roast_manager import prepare as prepare_roast_manager
 from src.config.config import load_config
 from src.core.commands.ask_command import handle_ask_command
 from src.core.commands.chill_command import handle_chill_command
@@ -47,6 +48,9 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
         # Initialize translator
         self.translator = Translator()
         self.auto_translate = config["bot"].get("auto_translate", True)
+
+        # Load RoastManager Cog
+        prepare_roast_manager(self)
 
     async def event_ready(self):
         print(f'\n🤖 Connected to Twitch chat as {self.nick}')
