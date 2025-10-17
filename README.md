@@ -43,6 +43,8 @@ SerdaBot is a lightweight, multilingual Twitch chat assistant powered by a local
 
 ## 🚀 Quick Start
 
+### Linux / macOS
+
 ```bash
 # Install dependencies
 pip install -r requirements.txt
@@ -51,8 +53,22 @@ pip install -r requirements.txt
 bash tools/start_servers.sh
 
 # Run the bot
-python src/chat/twitch_bot.py
+./start_bot.sh
 ```
+
+### Windows
+
+```powershell
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the bot
+.\start_bot.ps1
+```
+
+📖 **Full installation guides:**
+- [INSTALL.md](INSTALL.md) — Linux/macOS
+- [INSTALL_WINDOWS.md](INSTALL_WINDOWS.md) — Windows 10/11
 
 ## ❤️ Credit
 

@@ -1,7 +1,8 @@
 """Tests for ask_utils module."""
 
 import pytest
-from utils.ask_utils import estimate_tokens, build_ask_prompt
+from unittest.mock import AsyncMock, patch, MagicMock
+from utils.ask_utils import estimate_tokens, build_ask_prompt, get_max_length
 
 
 class TestEstimateTokens:
@@ -60,3 +61,33 @@ class TestBuildAskPrompt:
         
         assert "What is Python?" in prompt
         assert "   " not in prompt or prompt.count("   ") < 2
+
+
+class TestGetMaxLength:
+    """Tests for max length calculation."""
+    
+    def test_basic_max_length(self):
+        """Test basic max length calculation."""
+        prefix = "Start: "
+        suffix = " :End"
+        limit = 100
+        max_len = get_max_length(prefix, suffix, limit)
+        
+        # Should be limit - len(prefix) - len(suffix)
+        expected = 100 - len(prefix) - len(suffix)
+        assert max_len == expected
+    
+    def test_max_length_with_long_prefix_suffix(self):
+        """Test max length when prefix+suffix exceed limit."""
+        prefix = "A" * 60
+        suffix = "B" * 60
+        limit = 100
+        max_len = get_max_length(prefix, suffix, limit)
+        
+        # Should return 0 when prefix+suffix > limit
+        assert max_len == 0
+    
+    def test_max_length_zero_limit(self):
+        """Test max length with zero limit."""
+        max_len = get_max_length("prefix", "suffix", 0)
+        assert max_len == 0
