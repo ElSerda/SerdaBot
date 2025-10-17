@@ -28,9 +28,44 @@ Stop Sequences:      ["\n", "User:", "Assistant:", "@"]
 ```
 
 **Ce preset fonctionne pour toutes les commandes** (`!chill`, `!ask`, `!game`) car :
-- Les prompts système sont **ultra-stricts** : "UNE phrase (12-25 mots MAX)"
-- Le code ajuste les paramètres si besoin (ex: `max_tokens` peut varier par commande)
+- Le **system prompt** est chargé depuis `prompt_system.txt` (universel)
+- Les **user prompts** sont générés dynamiquement par `make_prompt()` dans `prompt_loader.py`
+- Easter Egg pour El_Serda géré automatiquement dans `make_prompt()`
 - Pas besoin de changer la config LM Studio selon la commande
+
+---
+
+## 📝 Architecture des Prompts (Nouveau Système)
+
+### **Principe : 1 SYSTEM + 1 USER dynamique**
+
+```python
+# SYSTEM prompt (universel, dans prompt_system.txt)
+"Tu es serda_bot, un bot Twitch francophone, fun et complice.
+RÈGLES GÉNÉRALES :
+- Toujours UNE SEULE phrase, naturelle, 20 à 30 mots MAX ou 150 caractères MAX.
+- Zéro commande /me, zéro hashtag. 0 à 2 émojis max.
+- Style Twitch : direct, joueur, jamais agressif.
+- Si tu reconnais le pseudo 'El_Serda' → mode roast gentil 😈"
+
+# USER prompt (dynamique, généré par make_prompt())
+"Contexte: Jeu=Valorant, Titre=Rank up chill.
+Le message vient de ton créateur (el_serda). Active ton mode 'roast'.
+Viewer dit: «toujours aussi gentil serda_bot». Réponds sur un ton complice et fun."
+```
+
+### **Avantages du nouveau système :**
+- ✅ **Un seul SYSTEM prompt** → cohérence garantie
+- ✅ **Easter Egg automatique** → détection d'El_Serda dans `make_prompt()`
+- ✅ **Contexte dynamique** → game/title injectés automatiquement
+- ✅ **Suppression des anciens fichiers** → `prompt_chill_elserda.txt`, `prompt_ask_fr.txt` obsolètes
+- ✅ **Code plus simple** → pas de gestion manuelle de fichiers dans les commandes
+
+### **Modes disponibles dans make_prompt() :**
+- `ask` : Questions du chat ("Quelle est la capitale de la France ?")
+- `chill` : Interactions casual ("Salut le bot !")
+- `trad` : Traduction automatique (FR ↔ EN)
+- `reactor` : Réactions aux spam du chat ("LUL LUL LUL")
 
 ---
 

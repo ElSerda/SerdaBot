@@ -2,7 +2,8 @@
 
 from twitchio import Message  # pyright: ignore[reportPrivateImportUsage]
 
-from src.utils.ask_utils import build_ask_prompt, call_model
+from prompts.prompt_loader import make_prompt
+from utils.ask_utils import call_model
 
 
 async def handle_ask_command(message: Message, config: dict, question: str, now):  # pylint: disable=unused-argument
@@ -22,7 +23,13 @@ async def handle_ask_command(message: Message, config: dict, question: str, now)
     if debug:
         print(f"[ASK] 🔎 Traitement de la question de @{user}...")
 
-    prompt = build_ask_prompt(user, question)
+    # Récupérer game/title depuis config (si disponible)
+    game = config.get("stream", {}).get("game")
+    title = config.get("stream", {}).get("title")
+
+    # Construire le prompt avec make_prompt
+    prompt = make_prompt(mode="ask", content=question, user=user, game=game, title=title)
+    
     response = await call_model(prompt, config, user=user)
 
     if not response:

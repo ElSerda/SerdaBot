@@ -12,6 +12,7 @@ except ImportError:
     print("⚠️ Module 'ctransformers' non installé. Installation avec: pip install ctransformers")
 
 from config.config import load_config
+from prompts.prompt_loader import load_system_prompt
 from utils.clean import clean_response
 
 # Import OpenAI avec gestion d'erreur
@@ -90,20 +91,17 @@ async def query_model(
                 if response.status_code in [200, 400]:  # 400 = pas de modèle mais endpoint ok
                     print("🔗 [LM STUDIO] Endpoint actif")
 
+                    # Charger le system prompt universel
+                    system_prompt = load_system_prompt()
+
                     # Vraie requête vers LM Studio (optimisé pour Twitch one-liners)
                     real_payload = {
                         "model": "local-model",
                         "messages": [
-                            {
-                                "role": "system",
-                                "content": (
-                                    "Bot Twitch FR, UNE phrase (12-25 mots), ton fun/complice, "
-                                    "pas de /me, 0-2 émojis, pas d'auto-flatterie."
-                                )
-                            },
+                            {"role": "system", "content": system_prompt},
                             {"role": "user", "content": prompt}
                         ],
-                        "max_tokens": 50,
+                        "max_tokens": 60,
                         "temperature": 0.7,
                         "top_k": 40,
                         "top_p": 0.9,

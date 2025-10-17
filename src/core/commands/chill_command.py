@@ -1,10 +1,8 @@
 """Command handler for chill/sarcastic bot responses."""
 
-import os
-
 from twitchio import Message  # pyright: ignore[reportPrivateImportUsage]
 
-from prompts.prompt_loader import load_prompt_template
+from prompts.prompt_loader import make_prompt
 from utils.ask_utils import call_model
 
 
@@ -48,7 +46,6 @@ async def handle_chill_command(message: Message, config: dict, now):  # pylint: 
     """Handle chill command with sarcastic AI responses."""
     botname = config["bot"]["name"].lower()
     debug = config["bot"].get("debug", False)
-    lang = config["bot"].get("language", "fr")
     user = str(message.author.name or "user").lower()
 
     # Extraire le contenu du message sans le nom du bot
@@ -57,29 +54,13 @@ async def handle_chill_command(message: Message, config: dict, now):  # pylint: 
     if not content:
         content = "Salut !"
 
-    # Easter egg pour El_Serda uniquement
-    try:
-        if user in ["el_serda", "elserda"]:
-            if debug:
-                print(f"[CHILL] 🎉 Mode EASTER EGG activé pour {user}!")
-            # Remonter de 2 niveaux: core/commands -> src, puis prompts/
-            prompt_dir = os.path.join(
-                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-                'prompts'
-            )
-            easter_path = os.path.join(prompt_dir, 'prompt_chill_elserda.txt')
-            with open(easter_path, 'r', encoding='utf-8') as f:
-                prompt_template = f.read()
-            prompt = prompt_template.replace("{message}", content)
-            prompt = prompt.replace("{max_length}", "500")
-        else:
-            prompt_template = load_prompt_template("chill", lang)
-            prompt = prompt_template.replace("{user}", user)
-            prompt = prompt.replace("{max_length}", "500")
-            prompt += f"\n\nMessage de {user}: {content}"
-    except (FileNotFoundError, IOError, OSError) as e:
-        print(f"[CHILL] ⚠️ Erreur chargement prompt: {e}")
-        prompt = f"Réponds de manière détendue à {user}: {content}"
+    # Récupérer game/title depuis config (si disponible)
+    game = config.get("stream", {}).get("game")
+    title = config.get("stream", {}).get("title")
+
+    # Construire le prompt avec make_prompt (gère automatiquement l'Easter Egg)
+    prompt = make_prompt(mode="chill", content=content, user=user, game=game, title=title)
+
     response = await call_model(prompt, config, user=user)
 
     if debug:
