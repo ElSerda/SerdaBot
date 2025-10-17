@@ -1,6 +1,7 @@
 """Command handler for chill/sarcastic bot responses."""
 
 import os
+
 from twitchio import Message  # pyright: ignore[reportPrivateImportUsage]
 
 from prompts.prompt_loader import load_prompt_template
@@ -28,7 +29,8 @@ async def handle_chill_command(message: Message, config: dict, now):  # pylint: 
     user = str(message.author.name or "user").lower()
 
     # Extraire le contenu du message sans le nom du bot
-    content = message.content.strip().lower().replace(botname, "").strip()
+    raw_content = message.content or ""
+    content = raw_content.strip().lower().replace(botname, "").strip()
     if not content:
         content = "Salut !"
 
