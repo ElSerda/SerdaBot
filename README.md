@@ -1,11 +1,12 @@
 ![CI](https://github.com/ElSerda/SerdaBot/actions/workflows/ci.yml/badge.svg)
 
-# 🤖 SerdaBot – Twitch AI Assistant (v0.1.0)
+# 🤖 SerdaBot – Twitch AI Assistant (v0.1.0-alpha)
 
-![Version](https://img.shields.io/badge/version-v0.1.0-green)
+![Version](https://img.shields.io/badge/version-v0.1.0--alpha-orange)
 ![License](https://img.shields.io/badge/license-AGPL--v3-blue)
-![Python](https://img.shields.io/badge/python-3.12+-blue)
-![Status](https://img.shields.io/badge/status-Stable-brightgreen)
+![Python](https://img.shields.io/badge/python-3.10+-blue)
+![Status](https://img.shields.io/badge/status-Alpha-yellow)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 SerdaBot is a lightweight, multilingual Twitch chat assistant powered by a local Mistral-based language model and FastAPI. Designed for simplicity, extensibility, and fun.
 
