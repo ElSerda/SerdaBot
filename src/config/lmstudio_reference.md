@@ -4,9 +4,17 @@ Ce fichier documente les **paramètres optimaux** pour LM Studio avec SerdaBot.
 
 ---
 
-## 📋 Paramètres recommandés
+## 🎯 TL;DR : Un seul preset suffit !
 
-### **Preset "Punchline Twitch FR" (par défaut)**
+**LM Studio ne permet qu'un seul profil de paramètres à la fois.**  
+→ Configure avec le preset **"Standard Twitch"** ci-dessous.  
+→ Les variations de comportement (chill/hype) sont gérées **dans les prompts système**, pas dans LM Studio.
+
+---
+
+## ⚙️ Preset "Standard Twitch" (UNIQUE)
+
+**À configurer dans LM Studio :**
 
 ```yaml
 Temperature:         0.7
@@ -19,27 +27,10 @@ Limit response:      ON
 Stop Sequences:      ["\n", "User:", "Assistant:", "@"]
 ```
 
-### **Preset "Chill/Hello" (salutations, moins d'aléa)**
-
-```yaml
-Temperature:         0.6
-Top-K:               40
-Top-P:               0.85
-Min-P:               0.05
-Repeat Penalty:      1.15
-Max Tokens:          50
-```
-
-### **Preset "Hype" (quand le chat spam :hype)**
-
-```yaml
-Temperature:         0.8
-Top-K:               60
-Top-P:               0.92
-Min-P:               0.05
-Repeat Penalty:      1.05
-Max Tokens:          50
-```
+**Ce preset fonctionne pour toutes les commandes** (`!chill`, `!ask`, `!game`) car :
+- Les prompts système sont **ultra-stricts** : "UNE phrase (12-25 mots MAX)"
+- Le code ajuste les paramètres si besoin (ex: `max_tokens` peut varier par commande)
+- Pas besoin de changer la config LM Studio selon la commande
 
 ---
 
