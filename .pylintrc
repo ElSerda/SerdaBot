@@ -1,0 +1,16 @@
+[MASTER]
+ignore=venv,.venv,build,dist
+
+[MESSAGES CONTROL]
+disable=
+    C0303,  # trailing-whitespace
+    C0301,  # line-too-long (géré par black)
+    C0411,  # wrong-import-order (géré par isort)
+    C0114,  # missing-module-docstring
+    C0115,  # missing-class-docstring
+    C0116,  # missing-function-docstring
+    W0718,  # broad-exception-caught (on sait, c'est documenté)
+    C0415   # import-outside-toplevel (OK pour les tests)
+
+[FORMAT]
+max-line-length=100

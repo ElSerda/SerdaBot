@@ -54,7 +54,6 @@ Thumbs.db
 
 # === DEVELOPMENT FILES ===
 stress_test.py
-.pylintrc
 MIGRATION_*.md
 TRANSLATION_SIMPLE.md
 TRANSLATION_SYSTEM.md
