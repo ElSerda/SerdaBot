@@ -1,5 +1,6 @@
 """Command handler for chill/sarcastic bot responses."""
 
+import os
 from twitchio import Message  # pyright: ignore[reportPrivateImportUsage]
 
 from prompts.prompt_loader import load_prompt_template
@@ -36,23 +37,24 @@ async def handle_chill_command(message: Message, config: dict, now):  # pylint: 
         if user in ["el_serda", "elserda"]:
             if debug:
                 print(f"[CHILL] 🎉 Mode EASTER EGG activé pour {user}!")
-            import os
-            # Remonter de 2 niveaux depuis core/commands vers src, puis aller dans prompts
-            prompt_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'prompts')
+            # Remonter de 2 niveaux: core/commands -> src, puis prompts/
+            prompt_dir = os.path.join(
+                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                'prompts'
+            )
             easter_path = os.path.join(prompt_dir, 'prompt_chill_elserda.txt')
             with open(easter_path, 'r', encoding='utf-8') as f:
                 prompt_template = f.read()
-            prompt = prompt_template.replace("{message}", content).replace("{max_length}", "500")
+            prompt = prompt_template.replace("{message}", content)
+            prompt = prompt.replace("{max_length}", "500")
         else:
             prompt_template = load_prompt_template("chill", lang)
-            prompt = prompt_template.replace("{user}", user).replace("{max_length}", "500")
+            prompt = prompt_template.replace("{user}", user)
+            prompt = prompt.replace("{max_length}", "500")
             prompt += f"\n\nMessage de {user}: {content}"
-    except Exception as e:
+    except (FileNotFoundError, IOError, OSError) as e:
         print(f"[CHILL] ⚠️ Erreur chargement prompt: {e}")
-        import traceback
-        traceback.print_exc()
         prompt = f"Réponds de manière détendue à {user}: {content}"
-    
     response = await call_model(prompt, config, user=user)
 
     if debug:
