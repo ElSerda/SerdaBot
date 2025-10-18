@@ -483,6 +483,16 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
                 content[11:].strip() if cleaned.startswith("!translate ") else content[6:].strip()
             )
             if text:
+                # Limite Twitch: ~500 chars max, on garde une marge
+                MAX_INPUT_LENGTH = 200  # Limite input pour éviter débordement output
+                if len(text) > MAX_INPUT_LENGTH:
+                    await self.safe_send(
+                        message.channel,
+                        f"@{user} ⚠️ Texte trop long ({len(text)} chars). "
+                        f"Limite: {MAX_INPUT_LENGTH} caractères pour la traduction."
+                    )
+                    return
+                
                 try:
                     # Detect language (simple heuristic)
                     has_french = any(
@@ -496,9 +506,15 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
                     if translated and not translated.startswith("⚠️"):
                         flag_source = "🇫🇷" if source == "fr" else "🇬🇧"
                         flag_target = "🇬🇧" if source == "fr" else "🇫🇷"
-                        await self.safe_send(
-                            message.channel, f"{flag_source} {text}\n{flag_target} {translated}"
-                        )
+                        
+                        # Format compact pour éviter overflow
+                        response = f"{flag_target} {translated}"
+                        
+                        # Sécurité finale: tronquer si trop long
+                        if len(response) > 480:
+                            response = response[:477] + "…"
+                        
+                        await self.safe_send(message.channel, response)
                     elif translated and translated.startswith("⚠️"):
                         # Erreur de traduction avec message informatif
                         await self.safe_send(message.channel,  f"@{user} {translated}")
