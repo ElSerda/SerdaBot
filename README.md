@@ -8,7 +8,7 @@
 ![Status](https://img.shields.io/badge/status-Alpha-yellow)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
-SerdaBot is a lightweight, multilingual Twitch chat assistant powered by Qwen 2.5-1.5B (local LLM via LM Studio). Designed for simplicity, extensibility, and fun.
+SerdaBot is a lightweight, multilingual Twitch chat assistant powered by Qwen 2.5-3B (local LLM via LM Studio). Designed for simplicity, extensibility, and fun.
 
 ---
 
@@ -25,7 +25,7 @@ SerdaBot is a lightweight, multilingual Twitch chat assistant powered by Qwen 2.
 
 ## 🧠 Powered by
 
-- **Qwen 2.5-1.5B-Instruct-Q4_K_M** (local via LM Studio)
+- **Qwen 2.5-3B-Instruct-Q4_K_M** (local via LM Studio) - Upgraded from 1.5B for better quality
 - Optimized prompts (French native, 93% ASK + 80% CHILL success rate)
 - LibreTranslate (local or remote) for multilingual support
 - TwitchIO for real-time chat integration
