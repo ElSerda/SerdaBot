@@ -2,11 +2,17 @@
 Tests d'intégration du pipeline complet
 Teste le flux réel : User input → Cache → Wikipedia → Modèle → Output
 """
+import os
 import pytest
 
 from src.config.config import load_config
 from src.utils.cache_manager import clear_cache, get_cached_or_fetch, load_cache
 from src.utils.model_utils import call_model
+
+
+# Détecte si on est sur GitHub Actions (pas de LM Studio disponible)
+IS_CI = os.getenv('CI') == 'true' or os.getenv('GITHUB_ACTIONS') == 'true'
+skip_if_ci = pytest.mark.skipif(IS_CI, reason="Requires LM Studio (not available on CI)")
 
 
 class TestPipelineIntegration:
@@ -38,6 +44,7 @@ class TestPipelineIntegration:
         
         assert answer2 == answer1, "Cache devrait retourner la même réponse"
     
+    @skip_if_ci
     @pytest.mark.asyncio
     async def test_pipeline_wikipedia_fail_fallback_model(self):
         """Test : Wikipedia FAIL → Fallback modèle"""
@@ -83,6 +90,7 @@ class TestPipelineIntegration:
             assert all(a == answers[0] for a in answers), \
                 "Toutes les variations devraient retourner la même réponse (même clé normalisée)"
     
+    @skip_if_ci
     @pytest.mark.asyncio
     async def test_pipeline_mode_ask_vs_chill(self):
         """Test : Mode ASK (cache) vs CHILL (direct modèle)"""
@@ -136,6 +144,7 @@ class TestPipelineIntegration:
                 assert any(word in answer.lower() for word in ['amd', 'processeur', 'nvidia', 'graphique', 'gpu', 'carte']), \
                     "Réponse devrait contenir des mots-clés hardware pertinents"
     
+    @skip_if_ci
     @pytest.mark.asyncio
     async def test_pipeline_max_tokens_respected(self):
         """Test : MAX_TOKENS_ASK=120 permet réponses complètes"""
