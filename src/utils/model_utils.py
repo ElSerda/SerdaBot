@@ -8,14 +8,14 @@ import httpx
 from prompts.prompt_loader import load_system_prompt
 
 
-# Configuration optimale des tokens par mode (validé empiriquement sur 90 tests)
-# 1.5B: 98.9% fiable, 97.6 chars moyens, 100% complet à T=0.4
-# Test: 15 questions × 6 températures (0.0-1.0)
-# Augmenté à 120 pour headroom sur réponses longues (230-250 chars)
+# Configuration optimale des tokens par mode (validé empiriquement sur 98 tests)
+# Qwen2.5-3B: 98.9% fiable, ~150 chars moyens, phrases complètes
+# Test: 98/98 pytest PASS (validé Windows + Linux)
+# Augmenté CHILL de 45→60 pour éviter phrases coupées (fix v1.1.1)
 MAX_TOKENS_ASK = 120    # Headroom pour réponses 230-250 chars (évite cuts)
-MAX_TOKENS_CHILL = 45  # Adapte naturellement la longueur
+MAX_TOKENS_CHILL = 60   # Phrases complètes avec ponctuation (était 45)
 TEMP_ASK = 0.4          # Déterministe pour faits
-TEMP_CHILL = 0.5        # Légèrement créatif
+TEMP_CHILL = 0.7        # Créatif et naturel (synchro avec config.yaml)
 
 
 def estimate_tokens(text: str) -> int:
