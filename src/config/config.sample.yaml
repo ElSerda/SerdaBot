@@ -13,10 +13,12 @@ bot:
   cooldown: 10                              # Cooldown between responses (in seconds) - augmenté pour bot non vérifié
   model_endpoint: http://127.0.0.1:1234/v1/chat/completions  # LM Studio endpoint
   api_url: http://127.0.0.1:1234/v1/chat/completions       # LM Studio API endpoint
+  model_name: "qwen2.5-3b-instruct"         # Qwen2.5-3B-Instruct-Q4_K_M (sweet spot - recommended)
   model_timeout: 10                         # Timeout for model requests in seconds (default: 10s, increase for slow machines)
   log_ia: true                              # Enable AI logging (debugging)
   debug: true                               # Verbose output for debugging
   translation: libretranslate              # Use "model" or "libretranslate"
+  reset_cache_on_boot: false                # Reset fact cache at startup (default: false)
   kofi_url: "https://ko-fi.com/your_username"    # URL Ko-fi pour les donations
   donation_message: "☕ Merci pour le support ! Tu peux soutenir [YourName] ici : {kofi_url} 💜"
   connect_message: "C'est ici les précoces ? ☕"  # Message envoyé à la connexion (vide = désactivé)
