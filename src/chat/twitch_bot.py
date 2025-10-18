@@ -39,8 +39,12 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
     comme la traduction automatique, la gestion du spam et diverses commandes utilitaires.
     """
 
-    def __init__(self, config_path: str = 'src/config/config.yaml'):
-        self.config = load_config(config_path)
+    def __init__(self, config_or_path = 'src/config/config.yaml'):
+        # Support à la fois dict (déjà chargé) et string (path à charger)
+        if isinstance(config_or_path, dict):
+            self.config = config_or_path
+        else:
+            self.config = load_config(config_or_path)
         
         # Initialise le cache (avec reset si mode expérimental)
         reset_cache = self.config.get("bot", {}).get("reset_cache_on_boot", False)
