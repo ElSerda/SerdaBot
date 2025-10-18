@@ -1,4 +1,6 @@
 import re
+import time
+from datetime import datetime
 
 import httpx
 
@@ -67,6 +69,81 @@ def query_game(game_name, token):
     except httpx.RequestError as e:
         print(f'❌ IGDB: Requête échouée : {e}')
         return None
+
+
+def query_games_multiple(game_name: str, token: str, limit: int = 10, cache_manager=None) -> list:
+    """
+    Interroge l'API IGDB pour récupérer PLUSIEURS jeux matchant le nom.
+    Retourne liste de dicts: {id, name, year, platforms, summary}
+    
+    Args:
+        game_name: Nom du jeu à chercher
+        token: Token IGDB OAuth2
+        limit: Nombre max de résultats (défaut 10)
+        cache_manager: Instance de ConversationManager pour cache L1
+    
+    Returns:
+        Liste de jeux (0 à limit résultats)
+    """
+    # Check cache L1 si fourni
+    if cache_manager:
+        cache_key = (game_name.lower(), limit)
+        cached = cache_manager.cache_get(cache_key)
+        if cached:
+            return cached
+    
+    config = _get_config()
+    headers = {
+        'Client-ID': config['igdb']['client_id'],
+        'Authorization': f'Bearer {token}',
+        'Accept': 'application/json',
+    }
+
+    query = f'search "{game_name}"; fields name,summary,first_release_date,platforms.name; limit {limit};'
+    
+    try:
+        res = httpx.post(API_URL, headers=headers, content=query, timeout=10)
+        res.raise_for_status()
+        results = res.json()
+        
+        if not results:
+            return []
+        
+        # Normaliser format
+        games = []
+        for game in results:
+            release_ts = game.get('first_release_date')
+            if release_ts:
+                try:
+                    year = datetime.utcfromtimestamp(int(release_ts)).year
+                except (ValueError, TypeError):
+                    year = "?"
+            else:
+                year = "?"
+            
+            platforms_list = game.get('platforms', [])
+            platforms = ', '.join(p['name'] for p in platforms_list[:3]) if platforms_list else 'N/A'
+            
+            games.append({
+                'id': game.get('id'),
+                'name': game.get('name', 'Inconnu'),
+                'year': year,
+                'platforms': platforms,
+                'summary': game.get('summary', '')[:200],  # Limité pour mémoire
+                'release': game.get('first_release_date'),  # Pour compatibilité
+                'first_release_date': game.get('first_release_date')
+            })
+        
+        # Cache si manager fourni
+        if cache_manager:
+            cache_key = (game_name.lower(), limit)
+            cache_manager.cache_set(cache_key, games, ttl=60)
+        
+        return games
+        
+    except httpx.RequestError as e:
+        print(f'❌ IGDB: Requête échouée : {e}')
+        return []
 
 
 # 🌐 Fallback web scraping (simple)

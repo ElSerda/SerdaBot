@@ -18,9 +18,11 @@ class TestMaxTokensConfig:
         """MAX_TOKENS_ASK doit être 120 pour éviter les cuts à 230 chars"""
         assert MAX_TOKENS_ASK == 120, f"MAX_TOKENS_ASK devrait être 120, trouvé {MAX_TOKENS_ASK}"
     
-    def test_max_tokens_chill_is_45(self):
-        """MAX_TOKENS_CHILL doit rester à 45"""
-        assert MAX_TOKENS_CHILL == 45, f"MAX_TOKENS_CHILL devrait être 45, trouvé {MAX_TOKENS_CHILL}"
+    def test_max_tokens_chill_is_60(self):
+        """Vérifie que MAX_TOKENS_CHILL est 60 (commit c9e9a70)"""
+        from utils.model_utils import MAX_TOKENS_CHILL
+
+        assert MAX_TOKENS_CHILL == 60, f"MAX_TOKENS_CHILL devrait être 60, trouvé {MAX_TOKENS_CHILL}"
 
 
 class TestAtomicCacheWrite:
