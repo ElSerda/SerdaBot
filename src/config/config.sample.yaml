@@ -15,6 +15,10 @@ bot:
   api_url: http://127.0.0.1:1234/v1/chat/completions       # LM Studio API endpoint
   model_name: "qwen2.5-3b-instruct"         # Qwen2.5-3B-Instruct-Q4_K_M (sweet spot - recommended)
   model_timeout: 10                         # Timeout for model requests in seconds (default: 10s, increase for slow machines)
+  max_tokens_ask: 120                       # Max tokens for ASK mode (detailed answers)
+  max_tokens_chill: 60                      # Max tokens for CHILL mode (conversational, was 45)
+  temperature_ask: 0.4                      # Temperature for ASK mode (factual)
+  temperature_chill: 0.7                    # Temperature for CHILL mode (creative)
   log_ia: true                              # Enable AI logging (debugging)
   debug: true                               # Verbose output for debugging
   translation: libretranslate              # Use "model" or "libretranslate"
