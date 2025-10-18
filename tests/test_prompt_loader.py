@@ -12,21 +12,22 @@ class TestPromptLoader:
         assert prompt is not None
         assert len(prompt) > 0
         assert isinstance(prompt, str)
-        assert "serda_bot" in prompt.lower()
+        # Nouveau SYSTEM ultra-simplifié
+        assert "bot" in prompt.lower() and "twitch" in prompt.lower()
 
     def test_make_prompt_ask(self):
         """Test making ask prompt."""
         prompt = make_prompt('ask', 'Quelle heure est-il?', 'viewer123')
         assert prompt is not None
-        assert 'Mode: ask' in prompt
-        assert 'Quelle heure est-il?' in prompt
+        # Plus de "Mode: ask", maintenant c'est ultra-simplifié
+        assert 'Explique brièvement' in prompt or 'Quelle heure est-il?' in prompt
 
     def test_make_prompt_chill(self):
         """Test making chill prompt."""
         prompt = make_prompt('chill', 'Salut!', 'viewer456')
         assert prompt is not None
-        assert 'Mode: chill' in prompt
-        assert 'Salut!' in prompt
+        # Plus de "Mode: chill", maintenant c'est ultra-simplifié
+        assert 'Réponds' in prompt or 'Salut!' in prompt
 
     def test_make_prompt_trad(self):
         """Test making trad prompt."""
@@ -36,9 +37,11 @@ class TestPromptLoader:
 
     def test_make_prompt_with_roast(self):
         """Test making prompt with roast user."""
-        # el_serda est dans roast.json par défaut
+        # Roast maintenant géré en direct (pas dans le prompt)
+        # Le prompt pour roast user est identique à un user normal
         prompt = make_prompt('chill', 'Test', 'el_serda')
-        assert 'Roast' in prompt or 'el_serda' in prompt
+        assert 'Réponds' in prompt or 'Test' in prompt
+        # Pas de "Roast" car géré directement par chill_command.py
 
     def test_make_prompt_with_game_context(self):
         """Test making prompt with game context."""

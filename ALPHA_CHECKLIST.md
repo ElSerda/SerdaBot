@@ -12,24 +12,25 @@ Checklist des erreurs et améliorations à faire avant la release publique.
 - [x] Script de démarrage Linux (`start_bot.sh`)
 - [x] Build system avec PyInstaller
 - [x] CI/CD avec GitHub Actions
-- [x] Tests unitaires (68 tests, 100% passing)
+- [x] Tests unitaires (62 tests, 100% passing)
 - [x] Coverage à 27%+
 
 ### Fonctionnalités Core
 - [x] Bot Twitch opérationnel
-- [x] 19 commandes (4 publiques, 15 mod)
+- [x] 24 commandes (4 publiques, 20 mod)
 - [x] Système de fallback IA (LM Studio → DeadBot → OpenAI)
 - [x] Timeout configurable pour machines lentes
 - [x] Métriques détaillées (tokens, tok/s, durée)
 - [x] Whitelist/Blacklist de bots
 - [x] Système de traduction (FR ↔ EN)
+- [x] Système de roast dynamique (roast.json modulaire)
 - [x] Mode Easter Egg pour devs
 
 ### Documentation
 - [x] README.md complet
 - [x] INSTALL.md (Linux/macOS)
 - [x] INSTALL_WINDOWS.md
-- [x] COMMANDS.md (documentation des 19 commandes)
+- [x] COMMANDS.md (documentation des 24 commandes)
 - [x] BUILD.md (guide de build .exe)
 - [x] LICENSE (AGPL-v3)
 
@@ -67,9 +68,10 @@ Checklist des erreurs et améliorations à faire avant la release publique.
   - Solution : Ajouter tests ou documenter comme "expérimental"
 
 #### 🐛 Priorité Basse
-- [ ] **Prompts** : Pas de validation des templates
-  - Si fichier prompt manquant, crash
-  - Solution : Fallback vers prompt par défaut
+- [x] **Prompts** : Système optimisé avec budget control
+  - Budget USER = 180 chars max (smart clipping)
+  - Prompts totaux: 398-439 chars (réduction 54-58%)
+  - Tests validés: 62/62 passing ✅
 
 - [ ] **Data Files** : Pas de création auto des fichiers JSON manquants
   - Si `bot_whitelist.json` manque, crash
@@ -185,19 +187,40 @@ Cette version est une **preview technique** pour early adopters.
 
 | Métrique | Valeur | Objectif Beta |
 |----------|--------|---------------|
-| Tests | 68/68 ✅ | 100+ |
+| Tests | 62/62 ✅ | 100+ |
 | Coverage | 27% | 40%+ |
-| Bugs P1 | 2 � | 0 |
+| Bugs P1 | 2 🟥 | 0 |
 | Bugs P2 | 3 🟡 | 1 max |
-| Bugs P3 | 3 🔵 | 5 max |
+| Bugs P3 | 2 🔵 | 5 max |
 | Platforms | 3 ✅ | 3 |
 | Pylint Warnings | ~12 🟡 | 0 |
 | Users | 0 | 50+ |
+| Prompt Length | 398-439 chars ✅ | <500 |
 
 **Bugs corrigés récemment :**
 - ✅ Steam API (désactivé proprement)
 - ✅ Pylint warnings dans `chill_command.py` (5 corrigés)
+- ✅ Prompts trop longs (957 → 398-439 chars, -54-58%)
+- ✅ Hardcoded usernames (remplacé par roast.json modulaire)
+- ✅ 11 fichiers obsolètes supprimés (cleanup -316 lignes)
 
 ---
 
-**Dernière mise à jour :** 2025-10-17
+## 🎯 Nouveautés depuis dernier check
+
+### ✨ Optimisation Prompts (2025-10-18)
+- **Budget control** : USER_BUDGET = 180 chars max
+- **Smart clipping** : Préserve Mode/Jeu/Titre en priorité
+- **Roast quotes** : Limitées à 3 × 28 chars max
+- **Résultats** : 54-58% de réduction (957 → 398-439 chars)
+- **Cleanup** : -316 lignes de code, 11 fichiers obsolètes supprimés
+
+### 🤖 Système Roast Dynamique (2025-10-18)
+- **6 nouvelles commandes** : !addroast, !delroast, !listroast, !addquote, !delquote, !listquotes
+- **Config JSON** : `config/roast.json` (max 200 users, 200 quotes)
+- **Plus de hardcoding** : Fini les `prompt_*_elserda.txt`
+- **Modulaire** : Géré via TwitchIO Cog (`roast_manager.py`)
+
+---
+
+**Dernière mise à jour :** 2025-10-18

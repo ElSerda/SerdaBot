@@ -3,7 +3,7 @@
 from twitchio import Message  # pyright: ignore[reportPrivateImportUsage]
 
 from prompts.prompt_loader import make_prompt
-from utils.ask_utils import call_model
+from utils.model_utils import call_model
 
 
 async def handle_ask_command(message: Message, config: dict, question: str, now):  # pylint: disable=unused-argument
@@ -29,6 +29,9 @@ async def handle_ask_command(message: Message, config: dict, question: str, now)
 
     # Construire le prompt avec make_prompt
     prompt = make_prompt(mode="ask", content=question, user=user, game=game, title=title)
+    
+    if debug:
+        print(f"[ASK] 📝 USER Prompt ({len(prompt)} chars): {prompt[:150]}{'...' if len(prompt) > 150 else ''}")
     
     response = await call_model(prompt, config, user=user)
 

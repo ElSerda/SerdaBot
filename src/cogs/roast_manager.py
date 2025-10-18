@@ -7,6 +7,7 @@ from typing import Dict, List, Optional
 from twitchio.ext import commands
 
 DEFAULT_PATH = "config/roast.json"
+QUOTES_PATH = "config/quotes.json"
 MAX_USERS = 200
 MAX_QUOTES = 200
 MAX_QUOTE_LEN = 180
@@ -24,6 +25,16 @@ def load_roast_config(path: str = DEFAULT_PATH) -> Dict[str, List[str]]:
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
     data.setdefault("users", [])
+    data.setdefault("quotes", [])
+    return data
+
+
+def load_quotes_config(path: str = QUOTES_PATH) -> Dict[str, List[str]]:
+    """Load fun quotes configuration from JSON file."""
+    if not os.path.exists(path):
+        return {"quotes": []}
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
     data.setdefault("quotes", [])
     return data
 

@@ -16,6 +16,9 @@ data/bot_whitelist.json
 data/bot_blacklist.json
 data/blocked_sites.json
 
+# === PERSONAL FOLDER ===
+personnal/
+
 # === PROMPTS (Easter Eggs & Personal) ===
 src/prompts/prompt_*_elserda.txt
 src/prompts/prompt_ask_elserda.txt

@@ -1,6 +1,6 @@
-"""Tests for ask_utils module."""
+"""Tests for model_utils module."""
 
-from utils.ask_utils import estimate_tokens
+from utils.model_utils import estimate_tokens
 
 
 class TestEstimateTokens:

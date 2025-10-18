@@ -50,7 +50,12 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
         self.auto_translate = config["bot"].get("auto_translate", True)
 
         # Load RoastManager Cog
-        prepare_roast_manager(self)
+        try:
+            prepare_roast_manager(self)
+            print("[INIT] ✅ RoastManager Cog chargé")
+        except Exception as e:
+            print(f"[INIT] ❌ Erreur chargement RoastManager: {e}")
+            traceback.print_exc()
 
     async def event_ready(self):
         print(f'\n🤖 Connected to Twitch chat as {self.nick}')
