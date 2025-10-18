@@ -222,18 +222,19 @@ class Translator:
             print(f"Translation error: {e}")
 
             # Gestion spécifique des erreurs de traduction
+            # NOTE: On ne renvoie PLUS le texte original dans l'erreur (évite spam)
             if 'quota' in error_str or 'limit' in error_str:
                 print("🚨 [TRANSLATOR] Quota Google Translate épuisé!")
-                return f"⚠️ [Traduction temporairement indisponible] {text}"
+                return "⚠️ Traduction temporairement indisponible (quota dépassé)"
 
             elif 'network' in error_str or 'timeout' in error_str or 'connection' in error_str:
                 print("🚨 [TRANSLATOR] Problème de connexion Google Translate")
-                return f"⚠️ [Erreur réseau] {text}"
+                return "⚠️ Erreur réseau - Service de traduction inaccessible"
 
             elif 'blocked' in error_str or 'forbidden' in error_str:
                 print("🚨 [TRANSLATOR] Service de traduction bloqué!")
-                return f"⚠️ [Service bloqué] {text}"
+                return "⚠️ Service de traduction bloqué"
 
             else:
                 print(f"🚨 [TRANSLATOR] Erreur inconnue: {e}")
-                return f"⚠️ [Erreur traduction] {text}"
+                return "⚠️ Erreur de traduction (service indisponible)"
