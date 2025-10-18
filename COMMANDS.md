@@ -77,21 +77,60 @@ Affiche la liste complète des devs whitelistés pour la traduction.
 
 ---
 
-### 🚫 Gestion des Sites Bloqués (Anti-Spam)
+### 🚫 Gestion des Sites Bloqués (Anti-Spam Local)
 
 #### `!blocksite <nom_site>`
-Ajoute un site/mot-clé à la blacklist anti-spam.
+Ajoute un site/mot-clé à la blacklist anti-spam **locale** du bot.
 - Les bots contenant ce mot dans leur nom ou message seront automatiquement timeout (60s)
+- **Action** : `/timeout {user} 60` (message visible brièvement)
 - **Exemple** : `!blocksite streamboo`
 - **Exemple** : `!blocksite primes4free`
 
 #### `!unblocksite <nom_site>`
-Retire un site de la blacklist.
+Retire un site de la blacklist locale.
 - **Exemple** : `!unblocksite streamboo`
 
 #### `!blockedlist`
-Affiche tous les sites/mots-clés bloqués.
+Affiche tous les sites/mots-clés bloqués localement.
 - **Exemple de sortie** : `🚫 Sites bloqués (5): primes4free, streamboo, fakeviews, ...`
+
+---
+
+### 🛡️ Gestion AutoMod Twitch (API Officielle)
+
+**⚠️ Nécessite les scopes OAuth** : `moderator:manage:blocked_terms`, `moderator:read:blocked_terms`
+
+#### `!addbanword <mot>`
+Ajoute un mot/phrase à l'**AutoMod Twitch natif**.
+- **Action** : Message bloqué AVANT affichage (invisible dans le chat)
+- **Synchronisé** : Visible dans le dashboard Twitch
+- **Support phrases** : `!addbanword "insulte grave"` fonctionne
+- **Exemple** : `!addbanword badword`
+- **Exemple** : `!addbanword phrase complète`
+
+#### `!removebanword <mot>`
+Retire un mot de l'AutoMod Twitch.
+- **Exemple** : `!removebanword badword`
+
+#### `!banwords`
+Affiche tous les mots bannis dans l'AutoMod Twitch.
+- **Exemple de sortie** : `🚫 Mots bannis AutoMod (3): badword1, badword2, badword3`
+
+#### `!automod <0-4>`
+Configure le niveau de l'AutoMod Twitch global.
+- **0** : Désactivé
+- **1** : Faible
+- **2** : Modéré
+- **3** : Élevé
+- **4** : Strict
+- **Exemple** : `!automod 3`
+- **Effet** : Configure les filtres de toxicité, insultes, spam, etc.
+
+**💡 Différence blocksite vs AutoMod :**
+| Système | Quand | Visibilité | Fichier |
+|---------|-------|-----------|---------|
+| `!blocksite` | Timeout après envoi | Message visible brièvement | `blocked_sites.json` (local) |
+| `!addbanword` | Bloque avant affichage | Message invisible | AutoMod Twitch (API) |
 
 ---
 
@@ -169,10 +208,11 @@ bot:
 | **Publiques** | 4 |
 | **Modérateur (Roast)** | 6 |
 | **Modérateur (Devs)** | 3 |
-| **Modérateur (Sites)** | 3 |
+| **Modérateur (Anti-Spam Local)** | 3 |
+| **Modérateur (AutoMod Twitch)** | 4 |
 | **Modérateur (Bots)** | 6 |
 | **Modérateur (Traduction)** | 2 |
-| **TOTAL** | **24 commandes** |
+| **TOTAL** | **28 commandes** |
 
 ---
 

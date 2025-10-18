@@ -28,6 +28,7 @@ from src.core.commands.chill_command import handle_chill_command
 from src.core.commands.donation_command import handle_donation_command
 from src.core.commands.game_command import handle_game_command
 from src.utils.translator import Translator
+from src.utils.twitch_automod import TwitchAutoMod
 
 CONFIG = load_config()
 
@@ -63,6 +64,19 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
         # Initialize translator
         self.translator = Translator()
         self.auto_translate = self.config["bot"].get("auto_translate", True)
+
+        # Initialize AutoMod (if credentials available)
+        try:
+            self.automod = TwitchAutoMod(
+                client_id=self.config["twitch"]["client_id"],
+                access_token=self.config["twitch"]["token"].replace("oauth:", ""),
+                broadcaster_id=self.config["twitch"].get("broadcaster_id", self.config["twitch"]["bot_id"]),
+                moderator_id=self.config["twitch"]["bot_id"]
+            )
+            self.automod_enabled = True
+        except (KeyError, TypeError) as e:
+            print(f"⚠️ AutoMod désactivé (config manquante): {e}")
+            self.automod_enabled = False
 
     async def event_ready(self):
         print(f'\n🤖 Connected to Twitch chat as {self.nick}')
@@ -289,6 +303,91 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
                 )
             else:
                 await self.safe_send(message.channel,  "ℹ️ Aucun site bloqué.")
+            return
+
+        # === AUTOMOD TWITCH COMMANDS (API) ===
+        elif cleaned.startswith("!addbanword") and is_mod:
+            if not self.automod_enabled:
+                await self.safe_send(message.channel, "⚠️ AutoMod API désactivé (config/scopes manquants)")
+                return
+            
+            parts = content.split()
+            if len(parts) > 1:
+                word = " ".join(parts[1:])  # Support phrases avec espaces
+                result = await self.automod.add_blocked_term(word)
+                if result:
+                    await self.safe_send(
+                        message.channel,
+                        f"🚫 Mot '{word}' ajouté à l'AutoMod Twitch ! "
+                        f"Les messages avec ce mot seront bloqués automatiquement."
+                    )
+                else:
+                    await self.safe_send(message.channel, "❌ Erreur lors de l'ajout (vérifier scopes OAuth).")
+            else:
+                await self.safe_send(message.channel, f"@{user} Usage: !addbanword <mot>")
+            return
+
+        elif cleaned.startswith("!removebanword") and is_mod:
+            if not self.automod_enabled:
+                await self.safe_send(message.channel, "⚠️ AutoMod API désactivé (config/scopes manquants)")
+                return
+            
+            parts = content.split()
+            if len(parts) > 1:
+                word = " ".join(parts[1:])
+                # Trouver l'ID du term par son texte
+                term = await self.automod.find_blocked_term_by_text(word)
+                if term:
+                    success = await self.automod.remove_blocked_term(term["id"])
+                    if success:
+                        await self.safe_send(message.channel, f"✅ Mot '{word}' retiré de l'AutoMod.")
+                    else:
+                        await self.safe_send(message.channel, "❌ Erreur lors de la suppression.")
+                else:
+                    await self.safe_send(message.channel, f"ℹ️ '{word}' n'est pas dans la liste AutoMod.")
+            else:
+                await self.safe_send(message.channel, f"@{user} Usage: !removebanword <mot>")
+            return
+
+        elif cleaned.startswith("!banwords") and is_mod:
+            if not self.automod_enabled:
+                await self.safe_send(message.channel, "⚠️ AutoMod API désactivé (config/scopes manquants)")
+                return
+            
+            terms = await self.automod.get_blocked_terms()
+            if terms:
+                words = [t["text"] for t in terms]
+                words_str = ", ".join(words)
+                await self.safe_send(
+                    message.channel,
+                    f"🚫 Mots bannis AutoMod ({len(words)}): {words_str}"
+                )
+            else:
+                await self.safe_send(message.channel, "ℹ️ Aucun mot banni dans l'AutoMod.")
+            return
+
+        elif cleaned.startswith("!automod") and is_mod:
+            if not self.automod_enabled:
+                await self.safe_send(message.channel, "⚠️ AutoMod API désactivé (config/scopes manquants)")
+                return
+            
+            parts = content.split()
+            if len(parts) > 1 and parts[1].isdigit():
+                level = int(parts[1])
+                if 0 <= level <= 4:
+                    success = await self.automod.set_automod_level(level)
+                    if success:
+                        levels_desc = ["Désactivé", "Faible", "Modéré", "Élevé", "Strict"]
+                        await self.safe_send(
+                            message.channel,
+                            f"✅ AutoMod configuré: Niveau {level} ({levels_desc[level]})"
+                        )
+                    else:
+                        await self.safe_send(message.channel, "❌ Erreur de configuration.")
+                else:
+                    await self.safe_send(message.channel, "⚠️ Niveau doit être 0-4")
+            else:
+                await self.safe_send(message.channel, f"@{user} Usage: !automod <0-4>")
             return
 
         # === BOT WHITELIST/BLACKLIST COMMANDS ===
