@@ -161,7 +161,13 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
         user = str(message.author.name or "user").lower()
         now = datetime.now()
         cooldown = self.config["bot"].get("cooldown", 60)
-        cleaned = re.sub(r"[^\w\s!?]", "", content.lower())
+        
+        # Remove any @mention from start of content (for command parsing)
+        # Ex: "@serda_bot !gameinfo Plants vs Zombies" → "!gameinfo Plants vs Zombies"
+        # Simpler: works for any @mention, not just our bot
+        content_without_mention = re.sub(r"^@\w+\s+", "", content)
+        
+        cleaned = re.sub(r"[^\w\s!?]", "", content_without_mention.lower())
 
         # === CHECK BOT WHITELIST/BLACKLIST ===
         if self.translator.should_ignore_bot(user):
@@ -479,8 +485,9 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
         # === TRADUCTION MANUELLE ===
         elif (cleaned.startswith("!translate ") or cleaned.startswith("!trad ")) and is_mod:
             # Extract text
+            # Extract text
             text = (
-                content[11:].strip() if cleaned.startswith("!translate ") else content[6:].strip()
+                content_without_mention[11:].strip() if cleaned.startswith("!translate ") else content_without_mention[6:].strip()
             )
             if text:
                 # Limite Twitch: ~500 chars max, on garde une marge
@@ -532,13 +539,13 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
             return
 
         if cleaned.startswith("!gameinfo ") and "game" in self.enabled:
-            game_name = content[10:].strip()
+            game_name = content_without_mention[10:].strip()
             await self.run_with_cooldown(
                 user, lambda: handle_game_command(message, self.config, game_name, now)
             )
 
         elif cleaned.startswith("!ask") and "ask" in self.enabled:
-            query = content[4:].strip()
+            query = content_without_mention[4:].strip()
             if query == "":
                 await self.safe_send(
                     message.channel,
@@ -552,7 +559,7 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
 
         elif cleaned.startswith("!cacheadd "):
             # Commande admin: ajouter un fait au cache
-            args = content[10:].strip()
+            args = content_without_mention[10:].strip()
             await handle_cacheadd_command(message, self.config, args)
 
         elif cleaned == "!cachestats":
