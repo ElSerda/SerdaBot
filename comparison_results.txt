@@ -1,0 +1,314 @@
+================================================================================
+🔬 COMPARAISON MASSIVE: Qwen 2.5-1.5B vs GPT-4o-mini
+================================================================================
+📊 Cas de test: 30 ASK + 30 CHILL = 60 total
+🤖 Modèles: Qwen2.5-1.5B-Instruct-Q4_K_M (local) vs gpt-4o-mini (OpenAI)
+================================================================================
+✅ LM Studio actif
+
+🚀 Début des tests...
+
+================================================================================
+📚 MODE ASK (Questions techniques/gaming)
+================================================================================
+
+[1/30] Test: C'est quoi Python ?
+  Qwen:  ✅  37 chars | 0.48s | Langage populaire pour scripts et IA....
+  GPT:   ✅ 139 chars | 0.89s | Langage de programmation polyvalent, facile à apprendre, uti...
+
+[2/30] Test: C'est quoi JavaScript ?
+  Qwen:  ✅ 123 chars | 0.35s | Langage de programmation d'interprétation populaire pour le ...
+  GPT:   ✅ 133 chars | 1.40s | Langage de programmation utilisé principalement pour le déve...
+
+[3/30] Test: C'est quoi React ?
+  Qwen:  ✅ 126 chars | 0.26s | Framework open-source JavaScript utilisé principalement pour...
+  GPT:   ✅ 140 chars | 0.79s | Bibliothèque JavaScript pour construire des interfaces utili...
+
+[4/30] Test: C'est quoi Docker ?
+  Qwen:  ✅ 108 chars | 0.32s | Docker est une plateforme open-source permettant de créer, t...
+  GPT:   ✅ 113 chars | 0.73s | Outil de virtualisation léger permettant de créer, déployer ...
+
+[5/30] Test: C'est quoi Git ?
+  Qwen:  ✅ 105 chars | 0.30s | Git est une plateforme open source utilisée principalement p...
+  GPT:   ✅ 116 chars | 0.89s | Système de contrôle de version décentralisé pour suivre les ...
+
+[6/30] Test: C'est quoi une API ?
+  Qwen:  ✅ 182 chars | 0.48s | Une API (Application Programming Interface) est un en-point ...
+  GPT:   ✅  84 chars | 0.68s | Interface de programmation qui permet à des applications de ...
+
+[7/30] Test: C'est quoi le cloud computing ?
+  Qwen:  ✅ 193 chars | 0.55s | Le cloud computing est un modèle d'infrastructure technique ...
+  GPT:   ✅ 119 chars | 0.88s | Utilisation de ressources informatiques via Internet, permet...
+
+[8/30] Test: C'est quoi TypeScript ?
+  Qwen:  ✅ 101 chars | 0.28s | TypeScript est une langage de programmation qui ajoute les t...
+  GPT:   ✅ 145 chars | 0.94s | TypeScript est un sur-ensemble de JavaScript ajoutant des ty...
+
+[9/30] Test: C'est quoi Node.js ?
+  Qwen:  ✅  34 chars | 0.16s | Langage d'interpréteur JavaScript....
+  GPT:   ✅ 143 chars | 0.75s | Plateforme JavaScript côté serveur, permettant de créer des ...
+
+[10/30] Test: C'est quoi Kubernetes ?
+  Qwen:  ✅ 138 chars | 0.39s | Kubernetes est un système d'automatisation des infrastructur...
+  GPT:   ✅ 121 chars | 0.80s | Système d'orchestration pour automatiser le déploiement, la ...
+
+[11/30] Test: C'est quoi Elden Ring ?
+  Qwen:  ✅  79 chars | 0.28s | Elden Ring est un jeu action-RPG fantastique, créé par la so...
+  GPT:   ✅ 178 chars | 1.37s | Elden Ring est un jeu vidéo action-RPG développé par FromSof...
+
+[12/30] Test: C'est quoi Valorant ?
+  Qwen:  ✅  97 chars | 0.33s | Valorant est un jeu de rôle-action multi-joueurs en ligne (M...
+  GPT:   ✅ 104 chars | 0.86s | Jeu de tir tactique en équipe, développé par Riot Games, mêl...
+
+[13/30] Test: C'est quoi Minecraft ?
+  Qwen:  ✅  86 chars | 0.34s | Jeu de construction en 3D, un jeu d'exploitation et de créat...
+  GPT:   ✅ 143 chars | 0.81s | Jeu de construction et survie en monde ouvert, permettant de...
+
+[14/30] Test: C'est quoi League of Legends ?
+  Qwen:  ✅  73 chars | 0.27s | Jeu de stratégie en temps réel multi-joueurs basé sur le mod...
+  GPT:   ✅ 130 chars | 0.80s | Jeu vidéo multijoueur en ligne de type MOBA, où deux équipes...
+
+[15/30] Test: C'est quoi Dark Souls ?
+  Qwen:  ✅  41 chars | 0.15s | Jeu action-RPG difficile de FromSoftware....
+  GPT:   ✅ 133 chars | 1.04s | Jeu vidéo d'action-RPG célèbre pour sa difficulté, son ambia...
+
+[16/30] Test: C'est quoi Fortnite ?
+  Qwen:  ✅  43 chars | 0.25s | Jeu multijoueur en ligne d'action-aventure....
+  GPT:   ✅ 123 chars | 0.81s | Jeu vidéo multijoueur de bataille royale, mêlant constructio...
+
+[17/30] Test: C'est quoi Baldur's Gate 3 ?
+  Qwen:  ✅ 148 chars | 0.60s | Baldur's Gate 3 est une suite du jeu vidéo de rôle (Roguelik...
+  GPT:   ✅ 154 chars | 1.06s | Jeu de rôle basé sur D&D, développé par Larian Studios. Il p...
+
+[18/30] Test: C'est quoi Zelda Breath of the Wild ?
+  Qwen:  ✅  34 chars | 0.15s | Un jeu d'aventure-action japonais....
+  GPT:   ✅ 153 chars | 1.20s | Jeu d'action-aventure en monde ouvert de Nintendo, où Link e...
+
+[19/30] Test: C'est quoi Cyberpunk 2077 ?
+  Qwen:  ✅  51 chars | 0.30s | Jeu d'action-aventure développé par CD Projekt Red....
+  GPT:   ✅ 148 chars | 1.38s | Jeu vidéo RPG en monde ouvert, développé par CD Projekt Red,...
+
+[20/30] Test: C'est quoi Among Us ?
+  Qwen:  ✅  69 chars | 0.24s | Un jeu d'évasion en équipe où les membres du bateau sont des...
+  GPT:   ✅ 139 chars | 0.87s | Jeu multijoueur en ligne où des joueurs doivent identifier u...
+
+[21/30] Test: C'est quoi blockchain ?
+  Qwen:  ✅  46 chars | 0.17s | Technologie de registre décentralisé sécurisé....
+  GPT:   ✅ 128 chars | 1.83s | Technologie de registre décentralisé et sécurisé, permettant...
+
+[22/30] Test: C'est quoi machine learning ?
+  Qwen:  ✅ 160 chars | 0.55s | Machine Learning est une branche des I.T. qui permet aux ord...
+  GPT:   ✅ 166 chars | 0.84s | Sous-domaine de l'IA, le machine learning permet aux ordinat...
+
+[23/30] Test: C'est quoi un NFT ?
+  Qwen:  ✅ 101 chars | 0.36s | Un NFT, ou Non-Fungible Token, est une pièce unique d'art nu...
+  GPT:   ✅ 138 chars | 0.93s | Un NFT (jeton non fongible) est un actif numérique unique, s...
+
+[24/30] Test: C'est quoi Twitch ?
+  Qwen:  ✅  33 chars | 0.15s | Site de streaming en direct d'IA....
+  GPT:   ✅ 140 chars | 1.41s | Plateforme de streaming en direct, principalement pour les j...
+
+[25/30] Test: C'est quoi Discord ?
+  Qwen:  ✅ 111 chars | 0.48s | Plateforme d'échange de messages entre amis basée sur le rés...
+  GPT:   ✅ 149 chars | 0.85s | Plateforme de communication pour les communautés, permettant...
+
+[26/30] Test: C'est quoi un speedrun ?
+  Qwen:  ✅  82 chars | 0.28s | Un speedrun est une compétition où le but est de terminer un...
+  GPT:   ✅ 142 chars | 0.82s | Pratique consistant à terminer un jeu vidéo le plus rapideme...
+
+[27/30] Test: C'est quoi le cosplay ?
+  Qwen:  ✅ 117 chars | 0.33s | Le cosplay est un art ou sport consistant à imiter des perso...
+  GPT:   ✅ 134 chars | 1.00s | Pratique où des personnes se déguisent en personnages de jeu...
+
+[28/30] Test: C'est quoi un emote ?
+  Qwen:  ✅ 128 chars | 0.39s | Un emote est une image ou un emoji utilisée dans les réseaux...
+  GPT:   ✅ 122 chars | 0.85s | Un emote est une petite image ou icône utilisée pour exprime...
+
+[29/30] Test: C'est quoi un raid Twitch ?
+  Qwen:  ✅ 131 chars | 0.34s | Un raid Twitch est une compétition entre joueurs pour attein...
+  GPT:   ✅ 146 chars | 0.90s | Un raid Twitch consiste à envoyer les spectateurs d'un strea...
+
+[30/30] Test: C'est quoi un sub Twitch ?
+  Qwen:  ✅ 108 chars | 0.30s | Un sous-titrage sur Twitch est une traduction automatique de...
+  GPT:   ✅ 170 chars | 0.83s | Un sub Twitch est un abonnement payant à une chaîne, permett...
+
+================================================================================
+💬 MODE CHILL (Interactions sociales)
+================================================================================
+
+[1/30] Test: Salut !
+  Qwen:  ✅  1 mots | 0.10s | Yo.
+  GPT:   ✅  1 mots | 0.49s | Yo.
+
+[2/30] Test: Bonjour
+  Qwen:  ✅  2 mots | 0.08s | Bonjour !
+  GPT:   ✅  2 mots | 0.62s | Salut !
+
+[3/30] Test: Hey
+  Qwen:  ✅  2 mots | 0.13s | Salut !
+  GPT:   ✅  1 mots | 0.50s | Yo.
+
+[4/30] Test: Coucou
+  Qwen:  ✅  2 mots | 0.11s | Salut !
+  GPT:   ✅  2 mots | 0.49s | Salut !
+
+[5/30] Test: Yo
+  Qwen:  ✅  2 mots | 0.21s | Salut !
+  GPT:   ✅  1 mots | 0.55s | Yo.
+
+[6/30] Test: lol
+  Qwen:  ✅  3 mots | 0.17s | Marrant, hein ?
+  GPT:   ✅  1 mots | 0.59s | Marrant.
+
+[7/30] Test: mdr
+  Qwen:  ✅  2 mots | 0.10s | Pas mal.
+  GPT:   ✅  2 mots | 0.62s | Haha !
+
+[8/30] Test: gg
+  Qwen:  ✅  1 mots | 0.30s | Stylé.
+  GPT:   ✅  1 mots | 0.55s | Stylé.
+
+[9/30] Test: bravo
+  Qwen:  ✅  1 mots | 0.08s | Incroyable.
+  GPT:   ✅  1 mots | 0.55s | Incroyable.
+
+[10/30] Test: nice
+  Qwen:  ✅  1 mots | 0.08s | Incroyable.
+  GPT:   ✅  2 mots | 0.56s | Cool !
+
+[11/30] Test: stylé
+  Qwen:  ✅  1 mots | 0.11s | Incroyable.
+  GPT:   ✅  2 mots | 0.59s | Merci !
+
+[12/30] Test: bien joué
+  Qwen:  ✅  1 mots | 0.15s | Incroyable.
+  GPT:   ✅  2 mots | 0.55s | Merci !
+
+[13/30] Test: excellent
+  Qwen:  ✅  4 mots | 0.18s | Très content de vous!
+  GPT:   ✅  2 mots | 0.54s | Top !
+
+[14/30] Test: merci
+  Qwen:  ✅  3 mots | 0.11s | De rien !
+  GPT:   ✅  3 mots | 0.56s | De rien !
+
+[15/30] Test: thx
+  Qwen:  ✅  3 mots | 0.11s | De rien !
+  GPT:   ✅  4 mots | 0.64s | Pas de souci !
+
+[16/30] Test: thanks
+  Qwen:  ✅  3 mots | 0.35s | De rien !
+  GPT:   ✅  3 mots | 0.59s | De rien !
+
+[17/30] Test: t'es qui toi ?
+  Qwen:  ✅  4 mots | 0.09s | Le bot du stream.
+  GPT:   ✅  4 mots | 0.63s | Le bot du stream.
+
+[18/30] Test: qui es-tu ?
+  Qwen:  ❌  7 mots | 0.21s | Un bot cool mais pas très actif.
+  GPT:   ✅  4 mots | 0.58s | Le bot du stream.
+
+[19/30] Test: tu fais quoi ?
+  Qwen:  ✅  2 mots | 0.08s | Je commente.
+  GPT:   ✅  2 mots | 0.51s | Je chill.
+
+[20/30] Test: t'es un bot ?
+  Qwen:  ✅  3 mots | 0.10s | Oui, bot cool.
+  GPT:   ✅  1 mots | 0.65s | Ouais.
+
+[21/30] Test: tu t'appelles comment ?
+  Qwen:  ✅  1 mots | 0.10s | TuBot.
+  GPT:   ✅  1 mots | 0.53s | Serda_bot.
+
+[22/30] Test: comment ça va ?
+  Qwen:  ✅  1 mots | 0.12s | Nickel.
+  GPT:   ✅  4 mots | 0.90s | Nickel. Et toi ?
+
+[23/30] Test: ça va ?
+  Qwen:  ✅  1 mots | 0.24s | Nickel.
+  GPT:   ✅  2 mots | 0.59s | Tout roule.
+
+[24/30] Test: tu vas bien ?
+  Qwen:  ✅  1 mots | 0.07s | Nickel.
+  GPT:   ✅  4 mots | 0.60s | Ouais, et toi ?
+
+[25/30] Test: quoi de neuf ?
+  Qwen:  ✅  3 mots | 0.11s | Rien de spécial.
+  GPT:   ❌  6 mots | 0.56s | Rien de spécial. Et toi ?
+
+[26/30] Test: pourquoi ?
+  Qwen:  ✅  3 mots | 0.16s | Pour le fun.
+  GPT:   ✅  3 mots | 0.61s | Pour le fun.
+
+[27/30] Test: ah bon
+  Qwen:  ❌  6 mots | 0.21s | Je suis là pour te servir.
+  GPT:   ✅  2 mots | 0.55s | Ouais !
+
+[28/30] Test: sérieux ?
+  Qwen:  ✅  2 mots | 0.11s | Oui, sérieux.
+  GPT:   ✅  1 mots | 0.60s | Grave.
+
+[29/30] Test: vraiment ?
+  Qwen:  ✅  4 mots | 0.11s | Oui, bien sûr !
+  GPT:   ✅  2 mots | 0.61s | Ouais !
+
+[30/30] Test: ok
+  Qwen:  ✅  2 mots | 0.14s | D'accord !
+  GPT:   ✅  2 mots | 0.59s | Cool !
+
+
+================================================================================
+📊 STATISTIQUES COMPARATIVES
+================================================================================
+
+🎯 MODE ASK (30 cas)
+--------------------------------------------------------------------------------
+Métrique                             Qwen 1.5B          GPT-4o-mini    Gagnant
+--------------------------------------------------------------------------------
+Taux succès                             100.0%               100.0%           
+Cas valides                            30/30              30/30           
+Latence moyenne                         0.33s               0.97s           
+Chars moyenne                           96.2               136.4            
+Chars max                                  193                 178            
+
+💬 MODE CHILL (30 cas)
+--------------------------------------------------------------------------------
+Métrique                             Qwen 1.5B          GPT-4o-mini    Gagnant
+--------------------------------------------------------------------------------
+Taux succès                              93.3%                96.7%           
+Cas valides                            28/30              29/30           
+Latence moyenne                         0.14s               0.58s           
+Mots moyenne                             2.4                 2.3            
+Mots max                                     7                   6            
+
+📈 GLOBAL (60 cas)
+--------------------------------------------------------------------------------
+Taux succès global                       96.7%                98.3%
+Latence moyenne globale                 0.23s               0.78s
+
+
+================================================================================
+🏆 VERDICT FINAL
+================================================================================
+
+✨ SUCCÈS (objectif: 80%)
+  🥇 GPT-4o-mini:  98.3% (GAGNANT)
+  🥈 Qwen 1.5B:    96.7%
+
+⚡ VITESSE
+  🥇 Qwen 1.5B:    0.23s (GAGNANT, +233% plus rapide)
+  🥈 GPT-4o-mini:  0.78s
+
+💰 COÛT
+  🥇 Qwen 1.5B:    GRATUIT (local)
+  🥈 GPT-4o-mini:  ~$0.01 pour ce test (60 requêtes)
+
+🎯 RECOMMANDATION SERDABOT
+--------------------------------------------------------------------------------
+  ✅ QWEN 1.5B PRIORITAIRE:
+     - 96.7% succès (objectif 80% atteint)
+     - 0.23s latence (excellent pour live)
+     - GRATUIT (local)
+     - GPT-4o-mini en fallback (98.3% succès)
+
+================================================================================

@@ -1,26 +1,43 @@
 """Prompt loading and building utilities for SerdaBot."""
 
-import os
 import re
 from typing import Optional, Sequence, Dict, Any, List
-
-from cogs.roast_manager import DEFAULT_PATH, load_roast_config
 
 
 # === SYSTEM PROMPT - Production optimisée ===
 
-# SYSTEM ZH – Prompt chinois pour Qwen (95% réussite, 100% stabilité français)
-SYSTEM_ZH = """你是 serda_bot，一个法语 Twitch 聊天机器人。
-你在 Twitch IRC 聊天中，与观众一起观看游戏直播。
-你的性格轻松、机智、有点调皮，但从不刻薄。
-请只用法语回答，一句话（最多25个词或130字符）。
-无论用户的问题有多长，你的回答必须简短。
-绝对禁止用中文回答，必须用法语。
-禁止：道歉、脏话、/me、ASCII表情、列表。
-像 Twitch 用户一样自然地回应，幽默、有温度。"""
+# SYSTEM ASK – Prompt factuel pour questions
+SYSTEM_ASK_FINAL = """Tu es serda_bot. Réponds de façon concise et claire.
+Maximum 200 caractères par réponse.
 
-# === ROAST CONFIG (cache rechargeable) ===
-_roast_cache = load_roast_config(DEFAULT_PATH)
+Exemples:
+"python" → "Langage populaire pour scripts et IA."
+"blockchain" → "Technologie de registre décentralisé sécurisé."
+"Elden Ring" → "Jeu action-RPG difficile de FromSoftware."
+"""
+
+# SYSTEM CHILL – Prompt fun/cool pour interactions sociales
+SYSTEM_CHILL_FINAL = """Tu es serda_bot, bot Twitch cool mais flemme de trop parler.
+Réponds toujours en 1-5 mots maximum. Style décontracté.
+
+Exemples:
+"Salut !" → "Yo."
+"lol" → "Marrant."
+"gg" → "Stylé."
+"merci" → "De rien !"
+"bravo" → "Incroyable."
+"comment ça va ?" → "Nickel."
+"t'es qui toi ?" → "Le bot du stream."
+"tu fais quoi ?" → "Je commente."
+"pourquoi ?" → "Pour le fun."
+"t'es où ?" → "Juste ici."
+"""
+
+# Backward compatibility aliases (deprecated)
+SYSTEM_ASK_ZH = SYSTEM_ASK_FINAL
+SYSTEM_CHILL_ZH = SYSTEM_CHILL_FINAL
+SYSTEM_ASK_EN = SYSTEM_ASK_FINAL
+SYSTEM_CHILL_EN = SYSTEM_CHILL_FINAL
 
 
 # ===== USER SANITIZATION =====
@@ -50,8 +67,17 @@ def to_question_fr(raw: str) -> str:
     Turn any raw content into a French question WITHOUT adding instructions.
     - 1-3 words -> "C'est quoi X ?"
     - add ? if missing
+    - Remove duplicate "c'est quoi" if already present
     """
     t = strip_directives(raw)
+    
+    # Enlever "c'est quoi" au début si déjà présent
+    t_lower = t.lower()
+    if t_lower.startswith("c'est quoi "):
+        t = t[11:].strip()  # Remove "c'est quoi "
+    elif t_lower.startswith("c quoi "):
+        t = t[7:].strip()  # Remove "c quoi "
+    
     if not t:
         return "C'est quoi ?"
     if t.endswith("?"):
@@ -64,23 +90,38 @@ def to_question_fr(raw: str) -> str:
 def temp_for_mode(mode: str | None) -> float:
     """Return optimal temperature for mode.
     
-    ask: 0.6 (précis mais pas trop rigide)
-    chill: 0.7 (créatif mais stable)
+    ask: 0.4 (déterministe, zéro hallucinations)
+    chill: 0.5 (stable et naturel)
     """
-    return 0.6 if (mode or "").lower() == "ask" else 0.7
+    return 0.4 if (mode or "").lower() == "ask" else 0.5
 
 
-def build_messages(mode: str, content: str, lang: str | None = None) -> Dict[str, Any]:
+def build_messages(mode: str, content: str, lang: str | None = None, extract_metadata: bool = False) -> Dict[str, Any]:
     """
     Build OpenAI/LM-Studio compatible messages structure.
+    
+    Args:
+        mode: Command mode ('ask' or 'chill')
+        content: User input message
+        lang: Language for system prompt (default: 'zh')
+        extract_metadata: If True, enforce JSON output with metadata
     
     Returns dict with:
         - system: str
         - messages: List[Dict[str, str]]
         - temperature: float
     """
-    system = load_system_prompt(lang)
     mode_norm = (mode or "chill").lower()
+    
+    # Choisir le bon prompt selon le mode
+    if mode_norm == "ask":
+        system = SYSTEM_ASK_FINAL
+    else:
+        system = SYSTEM_CHILL_FINAL
+    
+    # Renforcement JSON si metadata activée
+    if extract_metadata:
+        system += '\n\n⚠️ IMPORTANT: Réponds UNIQUEMENT en JSON valide. Format strict: {"m":"ton message en français","t":"tone","c":0.9}. Aucun texte avant ou après le JSON.'
     
     # Mode ask : reformule en question pour clarifier l'intention
     # Mode chill : texte brut (juste nettoyage directives)
@@ -89,35 +130,178 @@ def build_messages(mode: str, content: str, lang: str | None = None) -> Dict[str
     else:
         user_text = strip_directives(content)
 
-    messages = [
-        {"role": "system", "content": system},
-        {"role": "user",   "content": user_text},
-    ]
+    # Few-shot enrichi pour mode chill (inclut réactions + questions)
+    if mode_norm == "chill" and not extract_metadata:
+        messages = [
+            {"role": "system", "content": system},
+            {"role": "user", "content": "lol"},
+            {"role": "assistant", "content": "Marrant."},
+            {"role": "user", "content": "t'es qui toi ?"},
+            {"role": "assistant", "content": "Le bot du stream."},
+            {"role": "user", "content": user_text},
+        ]
+    else:
+        messages = [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user_text},
+        ]
+    
+    # Température réduite pour JSON (plus stable)
+    if extract_metadata:
+        temperature = 0.4  # Strict pour garantir JSON valide
+    else:
+        temperature = temp_for_mode(mode_norm)  # Normal (0.6/0.7)
     
     return {
         "system": system,
         "messages": messages,
-        "temperature": temp_for_mode(mode_norm)
+        "temperature": temperature
     }
 
 
-def make_openai_payload(model: str, built: Dict[str, Any], max_tokens: int = 60, stop: List[str] | None = None) -> Dict[str, Any]:
+def get_response_format(extract_metadata: bool = False) -> Dict[str, Any] | None:
+    """
+    Generate optimized JSON Schema for structured output.
+    
+    Args:
+        extract_metadata: If True, force JSON output with message + tone metadata
+    
+    Returns:
+        JSON Schema dict or None (for normal text output)
+    
+    Note:
+        Uses short keys (m/t/c) to reduce token overhead by ~30%
+    """
+    if not extract_metadata:
+        return None
+    
+    return {
+        "type": "json_schema",
+        "json_schema": {
+            "name": "r",  # Short name
+            "strict": True,
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "m": {
+                        "type": "string",
+                        "description": "Message (français, max 130 chars)"
+                    },
+                    "t": {
+                        "type": "string",
+                        "enum": ["complice", "taquin", "hype", "neutre", "sarcastique"],
+                        "description": "Tone"
+                    },
+                    "c": {
+                        "type": "number",
+                        "description": "Confidence (0.0-1.0)"
+                    }
+                },
+                "required": ["m", "t"],
+                "additionalProperties": False
+            }
+        }
+    }
+
+
+def make_openai_payload(
+    model: str, 
+    built: Dict[str, Any], 
+    max_tokens: int = 60, 
+    stop: List[str] | None = None,
+    extract_metadata: bool = False
+) -> Dict[str, Any]:
     """
     Build a payload for OpenAI-compatible /v1/chat/completions endpoints (e.g., LM Studio).
     
-    Temperature from built dict overrides LM Studio settings!
+    Args:
+        model: Model name
+        built: Output from build_messages()
+        max_tokens: Maximum tokens to generate (80 ASK, 20 CHILL optimaux)
+        stop: Stop sequences
+        extract_metadata: If True, use JSON Schema to extract tone/confidence metadata
+    
+    Returns:
+        API payload dict
+    
+    Note:
+        Temperature from built dict overrides LM Studio settings!
+        Config optimale: ASK 80 tokens + temp 0.4 (200 chars prompt → réel ≤250), CHILL 20 tokens + temp 0.5 (95% succès validé)
     """
-    return {
+    # Déterminer mode depuis les messages pour config optimale
+    mode = "ask" if "C'est quoi" in str(built["messages"]) or "?" in str(built["messages"][-1].get("content", "")) else "chill"
+    
+    # Config optimale par mode (93% ASK + 80% CHILL validé)
+    if mode == "ask":
+        optimal_max_tokens = 80  # ~200 chars prompt → réel ≤250, explications complètes
+        optimal_stop = ["\n\n"]  # Stop paragraphes seulement
+        optimal_repeat = 1.1
+    else:
+        optimal_max_tokens = 20  # Ultra strict, 1-5 mots
+        optimal_stop = None  # Pas de stop, naturel
+        optimal_repeat = 1.0
+    
+    payload = {
         "model": model,
         "messages": built["messages"],
         "temperature": built["temperature"],  # Override LM Studio!
         "top_p": 0.9,
         "top_k": 40,
         "min_p": 0.05,
-        "repeat_penalty": 1.10,
-        "max_tokens": max_tokens,
-        "stop": stop or ["\nUser:", "\nAssistant:"],
+        "repeat_penalty": optimal_repeat,
+        "max_tokens": max_tokens if max_tokens != 60 else optimal_max_tokens,  # Use optimal si default
+        "stop": stop if stop is not None else optimal_stop,
     }
+    
+    # Add structured output if requested
+    response_format = get_response_format(extract_metadata)
+    if response_format:
+        payload["response_format"] = response_format
+    
+    return payload
+
+def parse_structured_response(response_text: str) -> Dict[str, Any]:
+    """
+    Parse structured JSON response from LLM with robust fallback.
+    
+    Args:
+        response_text: Raw response text (should be JSON if extract_metadata=True)
+    
+    Returns:
+        Dict with keys:
+        - message: str (the actual response text)
+        - tone: str | None (detected tone)
+        - confidence: float | None (confidence score)
+    
+    Note:
+        Accepts both short keys (m/t/c) and long keys (message/tone/confidence)
+        for backward compatibility and robustness.
+    """
+    import json
+    
+    try:
+        # Try to extract JSON if surrounded by text
+        # Match: {...} or just parse directly
+        json_match = re.search(r'\{[^{}]*"[mtc]"[^{}]*\}', response_text)
+        if json_match:
+            response_text = json_match.group(0)
+        
+        parsed = json.loads(response_text)
+        
+        # Robust parser: accepts both short (m/t/c) and long keys
+        return {
+            "message": parsed.get("m") or parsed.get("message") or response_text,
+            "tone": parsed.get("t") or parsed.get("tone"),
+            "confidence": parsed.get("c") or parsed.get("confidence")
+        }
+    except (json.JSONDecodeError, TypeError, AttributeError):
+        # Fallback: treat as plain text
+        return {
+            "message": response_text.strip(),
+            "tone": None,
+            "confidence": None
+        }
+
 
 # === MODE STYLES (ultra légers) ===
 MODE_STYLES = {
@@ -166,24 +350,21 @@ def _join_short_quotes(quotes: Sequence[str], max_quotes: int = 3, per_quote_max
     return " | ".join(short)
 
 
-def reload_roast_config(path: str = DEFAULT_PATH):
-    """Reload roast configuration from disk (call after !addroast/!delroast)."""
-    global _roast_cache
-    _roast_cache = load_roast_config(path)
-
-
-def load_system_prompt(lang: str | None = None) -> str:
+def load_system_prompt(lang: str | None = None, mode: str = "chill") -> str:
     """
-    Load system prompt optimized for Qwen.
+    Load system prompt optimized for Qwen 2.5-1.5B-Instruct.
     
     Args:
-        lang: Ignored (kept for API compatibility). Always returns ZH prompt.
+        lang: Ignored (kept for API compatibility)
+        mode: Command mode ('ask' or 'chill')
     
     Returns:
-        SYSTEM_ZH - Chinese instructions for best performance with Qwen
-                    (95% success rate, 100% French stability)
+        SYSTEM_ASK_FINAL for ask mode (factual, 200 chars limit)
+        SYSTEM_CHILL_FINAL for chill mode (fun/cool, 1-5 words)
     """
-    return SYSTEM_ZH
+    if mode == "ask":
+        return SYSTEM_ASK_FINAL
+    return SYSTEM_CHILL_FINAL
 
 
 def make_prompt(

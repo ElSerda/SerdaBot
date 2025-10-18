@@ -1,14 +1,10 @@
-import os, time, requests, random
+import os, time, requests
 
 API   = os.environ.get("LLM_API", "http://127.0.0.1:1234/v1/chat/completions")
 MODEL = os.environ.get("LLM_MODEL", "Qwen2.5-1.5B-Instruct-Q4_K_M")
 
-# === MODE ANALYSE ===
-DISABLE_QUOTES = True  # Set False pour tester roast/quotes
-
 # importe tes helpers actuels
 from prompts.prompt_loader import build_messages, make_openai_payload
-from cogs.roast_manager import load_roast_config, load_quotes_config, DEFAULT_PATH, QUOTES_PATH
 
 def call_model(built, max_tokens=60):
     """Appelle le modèle avec le nouveau système build_messages."""
@@ -27,27 +23,7 @@ def call_model(built, max_tokens=60):
 def run_case_with_lang(mode, message, user, lang="zh", max_tokens=60):
     """Test un cas avec une langue de prompt spécifique."""
     
-    # === ROAST DIRECT (comme dans chill_command.py) ===
-    if not DISABLE_QUOTES:
-        roast_config = load_roast_config(DEFAULT_PATH)
-        roast_users = {u.lower() for u in roast_config.get("users", [])}
-        roast_quotes = roast_config.get("quotes", [])
-        
-        if mode == "chill" and user.lower() in roast_users and roast_quotes:
-            quote = random.choice(roast_quotes)
-            print(f"OUT   : {quote}  (len={len(quote)}, 0.00s ⚡ ROAST DIRECT)")
-            return
-        
-        # === QUOTE FUN (20% pour users normaux) ===
-        quotes_config = load_quotes_config(QUOTES_PATH)
-        fun_quotes = quotes_config.get("quotes", [])
-        
-        if mode == "chill" and fun_quotes and random.random() < 0.2:
-            quote = random.choice(fun_quotes)
-            print(f"OUT   : {quote}  (len={len(quote)}, 0.00s ⚡ QUOTE FUN)")
-            return
-    
-    # === MODÈLE (ask ou chill normal) ===
+    # === MODÈLE (ask ou chill) ===
     built = build_messages(mode, message, lang=lang)
     txt, dt = call_model(built, max_tokens=max_tokens)
     print(f"OUT   : {txt}  (len={len(txt)}, {dt:.2f}s)")
@@ -59,9 +35,8 @@ def run_case_with_lang(mode, message, user, lang="zh", max_tokens=60):
 
 if __name__ == "__main__":
     print("=" * 80)
-    mode_txt = "MODE ANALYSE - Quotes/Roast désactivés" if DISABLE_QUOTES else "MODE COMPLET - v1.1.2"
-    print(f"🧪 MEGA SMOKE TEST - PROMPT ZH PRODUCTION (max_tokens=250)")
-    print(f"📝 {mode_txt}")
+    print(f"🧪 MEGA SMOKE TEST - PROMPT ZH SARCASTIQUE (max_tokens=250)")
+    print(f"📝 Ton sarcastique/humour pour tous les users")
     print(f"🎯 Test exhaustif : Ask tech/gaming/culture + Chill varié")
     print("=" * 80)
     

@@ -1,10 +1,7 @@
 """Command handler for chill/sarcastic bot responses."""
 
-import random
-
 from twitchio import Message  # pyright: ignore[reportPrivateImportUsage]
 
-from cogs.roast_manager import load_roast_config, load_quotes_config, DEFAULT_PATH, QUOTES_PATH
 from prompts.prompt_loader import make_prompt
 from utils.model_utils import call_model
 
@@ -46,7 +43,7 @@ def filter_generic_responses(response: str) -> str:
 
 
 async def handle_chill_command(message: Message, config: dict, now):  # pylint: disable=unused-argument
-    """Handle chill command with sarcastic AI responses."""
+    """Handle chill command with sarcastic AI responses for all users."""
     botname = config["bot"]["name"].lower()
     debug = config["bot"].get("debug", False)
     user = str(message.author.name or "user").lower()
@@ -57,36 +54,11 @@ async def handle_chill_command(message: Message, config: dict, now):  # pylint: 
     if not content:
         content = "Salut !"
 
-    # === ROAST DIRECT (100% pour users roast) ===
-    roast_config = load_roast_config(DEFAULT_PATH)
-    roast_users = {u.lower() for u in roast_config.get("users", [])}
-    roast_quotes = roast_config.get("quotes", [])
-    
-    if user in roast_users and roast_quotes:
-        # Envoyer roast direct sans passer par le modèle
-        roast_quote = random.choice(roast_quotes)
-        if debug:
-            print(f"[CHILL] 🎭 ROAST DIRECT pour @{user}: {roast_quote}")
-        await message.channel.send(roast_quote)
-        return  # Exit early, pas de call au modèle
-
-    # === QUOTE FUN (20% probabilité pour users normaux) ===
-    quotes_config = load_quotes_config(QUOTES_PATH)
-    fun_quotes = quotes_config.get("quotes", [])
-    
-    if fun_quotes and random.random() < 0.2:  # 20% chance
-        fun_quote = random.choice(fun_quotes)
-        if debug:
-            print(f"[CHILL] 💬 QUOTE FUN pour @{user}: {fun_quote}")
-        await message.channel.send(fun_quote)
-        return  # Exit early, pas de call au modèle
-
-    # === CHILL NORMAL (via modèle, 80% du temps) ===
     # Récupérer game/title depuis config (si disponible)
     game = config.get("stream", {}).get("game")
     title = config.get("stream", {}).get("title")
 
-    # Construire le prompt avec make_prompt (gère automatiquement l'Easter Egg)
+    # Construire le prompt avec make_prompt
     prompt = make_prompt(mode="chill", content=content, user=user, game=game, title=title)
 
     if debug:

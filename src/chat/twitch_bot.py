@@ -16,7 +16,6 @@ from datetime import datetime, timedelta
 
 from twitchio.ext import commands  # type: ignore
 
-from src.cogs.roast_manager import prepare as prepare_roast_manager
 from src.config.config import load_config
 from src.core.commands.ask_command import handle_ask_command
 from src.core.commands.chill_command import handle_chill_command
@@ -48,14 +47,6 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
         # Initialize translator
         self.translator = Translator()
         self.auto_translate = config["bot"].get("auto_translate", True)
-
-        # Load RoastManager Cog
-        try:
-            prepare_roast_manager(self)
-            print("[INIT] ✅ RoastManager Cog chargé")
-        except Exception as e:
-            print(f"[INIT] ❌ Erreur chargement RoastManager: {e}")
-            traceback.print_exc()
 
     async def event_ready(self):
         print(f'\n🤖 Connected to Twitch chat as {self.nick}')
@@ -432,7 +423,7 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
             )
 
         elif self.botname in cleaned and "chill" in self.enabled:
-            # Mention du bot → Mode sarcastique El_Serda (seule façon d'activer chill)
+            # Mention du bot → Mode chill fun/cool (réponses ultra-courtes 1-5 mots)
             words = re.findall(r"\b\w+\b", cleaned)
             if self.botname in words:
                 await self.run_with_cooldown(

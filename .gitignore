@@ -73,3 +73,8 @@ htmlcov/
 # === TOOLS TESTS (excluded) ===
 tools/test_*.py
 tools/*_test.py
+
+# === SCRIPTS TESTS (dev only) ===
+scripts/test_*.py
+scripts/inspect_*.py
+scripts/smoke_strict.py

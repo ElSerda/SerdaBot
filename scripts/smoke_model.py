@@ -4,23 +4,31 @@ import requests
 API = os.environ.get("LLM_API", "http://127.0.0.1:1234/v1/chat/completions")
 MODEL = os.environ.get("LLM_MODEL", "Qwen2.5-1.5B-Instruct-Q4_K_M")
 
-# v1.1 - 187 chars
-SYSTEM = ("Bot Twitch FR. UNE phrase (≤30 mots, ≤150 chars). Pas de /me, hashtags. 0-2 émojis. "
-          "Ton naturel, direct, jamais méchant. Pas de salutations auto, métadiscours, excuses, auto-présentation.")
+# Import du prompt ZH de production
+from prompts.prompt_loader import SYSTEM_ZH
 
 def test_model(mode: str, user_text: str):
-    """Test direct du modèle avec température dynamique."""
+    """Test direct du modèle avec prompt ZH de production."""
     temp = 0.6 if mode == "ask" else 0.7
     
+    # Utilise le même système que build_messages() pour cohérence
     if mode == "ask":
-        user_msg = f"Explique brièvement: «{user_text if user_text.endswith('?') else user_text+' ?'}». Réponds en 1 phrase."
+        # Reformulation en question comme dans to_question_fr()
+        if not user_text.endswith("?"):
+            if len(user_text.split()) <= 3:
+                user_msg = f"C'est quoi {user_text} ?"
+            else:
+                user_msg = user_text + " ?"
+        else:
+            user_msg = user_text
     else:
-        user_msg = f"Réponds sur ton complice. «{user_text}». Réponds en 1 phrase."
+        # Mode chill: texte brut
+        user_msg = user_text
     
     payload = {
         "model": MODEL,
         "messages": [
-            {"role": "system", "content": SYSTEM},
+            {"role": "system", "content": SYSTEM_ZH},
             {"role": "user", "content": user_msg}
         ],
         "temperature": temp,
@@ -28,14 +36,14 @@ def test_model(mode: str, user_text: str):
         "top_k": 40,
         "min_p": 0.05,
         "repeat_penalty": 1.10,
-        "max_tokens": 60,
+        "max_tokens": 250,  # Aligné avec production
         "stop": ["\nUser:", "\nAssistant:"]
     }
     
     print(f"\n{'='*60}")
-    print(f"MODE: {mode.upper()} | TEMP: {temp}")
-    print(f"SYSTEM: {SYSTEM[:80]}... ({len(SYSTEM)} chars)")
-    print(f"USER: {user_msg[:80]}...")
+    print(f"MODE: {mode.upper()} | TEMP: {temp} | MAX_TOKENS: 250")
+    print(f"SYSTEM: SYSTEM_ZH (prompt chinois production)")
+    print(f"USER: {user_msg}")
     print(f"{'='*60}")
     
     t0 = time.time()
