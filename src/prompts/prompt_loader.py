@@ -6,38 +6,27 @@ from typing import Optional, Sequence, Dict, Any, List
 
 # === SYSTEM PROMPT - Production optimisée ===
 
-# SYSTEM ASK – Prompt factuel pour questions
-SYSTEM_ASK_FINAL = """Tu es serda_bot. Réponds de façon concise et claire.
-Maximum 200 caractères par réponse.
-
-Exemples:
-"python" → "Langage populaire pour scripts et IA."
-"blockchain" → "Technologie de registre décentralisé sécurisé."
-"Elden Ring" → "Jeu action-RPG difficile de FromSoftware."
+# SYSTEM ASK – Prompt factuel pour questions (SANS exemples - test naturel)
+SYSTEM_ASK_FINAL = """Réponds de façon concise et précise en 1-2 phrases. Maximum 230 caractères. Si tu ne sais pas, dis "Je ne sais pas".
 """
 
 # SYSTEM CHILL – Prompt fun/cool pour interactions sociales
-SYSTEM_CHILL_FINAL = """Tu es serda_bot, bot Twitch cool mais flemme de trop parler.
-Réponds toujours en 1-5 mots maximum. Style décontracté.
+SYSTEM_CHILL_FINAL = """Tu es serda_bot, bot Twitch cool et décontracté.
+Adapte ta réponse : 2-6 mots pour réactions simples (minimum 10 caractères), jusqu'à 2 phrases courtes si question intéressante.
+Pour questions complexes nécessitant explications détaillées, suggère '!ask' plutôt.
+Style naturel Twitch, pas de formules de robot. TERMINE TOUJOURS tes phrases.
 
 Exemples:
-"Salut !" → "Yo."
+"Salut !" → "Yo !"
 "lol" → "Marrant."
-"gg" → "Stylé."
-"merci" → "De rien !"
-"bravo" → "Incroyable."
-"comment ça va ?" → "Nickel."
-"t'es qui toi ?" → "Le bot du stream."
-"tu fais quoi ?" → "Je commente."
-"pourquoi ?" → "Pour le fun."
-"t'es où ?" → "Juste ici."
+"gg" → "Stylé !"
+"comment ça va ?" → "Nickel, et toi ?"
+"t'es qui toi ?" → "Serda_Bot, le bot du stream."
+"tu fais quoi ?" → "Je traine sur le chat."
+"apprends moi un truc" → "Les pandas dorment 14h par jour. Stylé non ?"
+"tu as quelque chose à dire ?" → "Ouais, le stream est cool aujourd'hui."
+"c'est quoi ton role ?" → "Je commente et réponds aux questions."
 """
-
-# Backward compatibility aliases (deprecated)
-SYSTEM_ASK_ZH = SYSTEM_ASK_FINAL
-SYSTEM_CHILL_ZH = SYSTEM_CHILL_FINAL
-SYSTEM_ASK_EN = SYSTEM_ASK_FINAL
-SYSTEM_CHILL_EN = SYSTEM_CHILL_FINAL
 
 
 # ===== USER SANITIZATION =====
@@ -79,21 +68,10 @@ def to_question_fr(raw: str) -> str:
         t = t[7:].strip()  # Remove "c quoi "
     
     if not t:
-        return "C'est quoi ?"
-    if t.endswith("?"):
-        return t
+        return "C'est quoi ? Réponds en une phrase."
     if len(t.split()) <= 3:
-        return f"C'est quoi {t} ?"
-    return t + " ?"
-
-
-def temp_for_mode(mode: str | None) -> float:
-    """Return optimal temperature for mode.
-    
-    ask: 0.4 (déterministe, zéro hallucinations)
-    chill: 0.5 (stable et naturel)
-    """
-    return 0.4 if (mode or "").lower() == "ask" else 0.5
+        return f"C'est quoi {t} ? Réponds en une phrase."
+    return f"{t} ? Réponds en une phrase."
 
 
 def build_messages(mode: str, content: str, lang: str | None = None, extract_metadata: bool = False) -> Dict[str, Any]:
@@ -130,7 +108,7 @@ def build_messages(mode: str, content: str, lang: str | None = None, extract_met
     else:
         user_text = strip_directives(content)
 
-    # Few-shot enrichi pour mode chill (inclut réactions + questions)
+    # Few-shot enrichi pour mode chill (inclut réactions + questions + anti-anecdotes)
     if mode_norm == "chill" and not extract_metadata:
         messages = [
             {"role": "system", "content": system},
@@ -138,6 +116,10 @@ def build_messages(mode: str, content: str, lang: str | None = None, extract_met
             {"role": "assistant", "content": "Marrant."},
             {"role": "user", "content": "t'es qui toi ?"},
             {"role": "assistant", "content": "Le bot du stream."},
+            {"role": "user", "content": "raconte une anecdote"},
+            {"role": "assistant", "content": "Pas d'anecdotes perso 😉"},
+            {"role": "user", "content": "ton avis sur l'IA ?"},
+            {"role": "assistant", "content": "Prometteur, à encadrer."},
             {"role": "user", "content": user_text},
         ]
     else:
@@ -150,7 +132,7 @@ def build_messages(mode: str, content: str, lang: str | None = None, extract_met
     if extract_metadata:
         temperature = 0.4  # Strict pour garantir JSON valide
     else:
-        temperature = temp_for_mode(mode_norm)  # Normal (0.6/0.7)
+        temperature = 0.4 if mode_norm == "ask" else 0.5
     
     return {
         "system": system,
@@ -233,11 +215,11 @@ def make_openai_payload(
     
     # Config optimale par mode (93% ASK + 80% CHILL validé)
     if mode == "ask":
-        optimal_max_tokens = 80  # ~200 chars prompt → réel ≤250, explications complètes
+        optimal_max_tokens = 120  # ~250-300 chars réels, explications développées
         optimal_stop = ["\n\n"]  # Stop paragraphes seulement
         optimal_repeat = 1.1
     else:
-        optimal_max_tokens = 20  # Ultra strict, 1-5 mots
+        optimal_max_tokens = 40  # Permet 1-2 phrases courtes (≈80-100 chars)
         optimal_stop = None  # Pas de stop, naturel
         optimal_repeat = 1.0
     

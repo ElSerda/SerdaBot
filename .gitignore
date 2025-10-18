@@ -78,3 +78,11 @@ tools/*_test.py
 scripts/test_*.py
 scripts/inspect_*.py
 scripts/smoke_strict.py
+
+# Cache files (runtime data)
+cache/
+*.bak
+
+# Benchmark results (local testing)
+scripts/*_results.json
+scripts/BENCHMARK_REPORT.md

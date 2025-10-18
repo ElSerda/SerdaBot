@@ -6,19 +6,6 @@ from prompts.prompt_loader import make_prompt
 from utils.model_utils import call_model
 
 
-def truncate_response(response: str, limit: int = 500) -> str:
-    """Truncates a response cleanly without cutting in the middle of a sentence."""
-    if len(response) <= limit:
-        return response
-    best_dot = response[:limit].rfind(".")
-    best_comma = response[:limit].rfind(",")
-    if best_dot > 100:
-        return response[: best_dot + 1].strip()
-    elif best_comma > 100:
-        return response[: best_comma + 1].strip()
-    return response[:limit].strip() + "…"
-
-
 def filter_generic_responses(response: str) -> str:
     """Filter out generic/cringe AI phrases and make responses punchier."""
     # Liste de phrases génériques à éviter (auto-congratulation)
@@ -64,7 +51,7 @@ async def handle_chill_command(message: Message, config: dict, now):  # pylint: 
     if debug:
         print(f"[CHILL] 📝 USER Prompt ({len(prompt)} chars): {prompt[:150]}{'...' if len(prompt) > 150 else ''}")
 
-    response = await call_model(prompt, config, user=user)
+    response = await call_model(prompt, config, user=user, mode="chill")
 
     if debug:
         print(f"[CHILL] 📨 Réponse du modèle: {response[:100] if response else 'VIDE'}...")
@@ -73,16 +60,21 @@ async def handle_chill_command(message: Message, config: dict, now):  # pylint: 
         await message.channel.send("🤷 Réponse manquante.")
         return
 
-    # Filtre anti-générique
+    # Filtre anti-générique (garde la spontanéité du bot)
     filtered = filter_generic_responses(response.strip())
     if not filtered:
         if debug:
             print(f"[CHILL] ⚠️ Réponse générique filtrée: {response[:50]}...")
-        # Fallback simple si la réponse est trop générique
         filtered = "🤔 Hmm, laisse-moi réfléchir à ça..."
 
-    final = truncate_response(filtered)
-    await message.channel.send(final)
-
-    if debug:
-        print(f"[CHILL] ✅ Réponse envoyée à @{user}")
+    # Sécurité Twitch (rare mais filet de sécurité)
+    final_response = filtered if len(filtered) <= 500 else filtered[:497] + "…"
+    
+    try:
+        if debug:
+            print(f"[SEND] 📤 Envoi CHILL: {final_response[:100]}...")
+        await message.channel.send(final_response)
+        if debug:
+            print(f"[CHILL] ✅ Réponse envoyée à @{user}")
+    except Exception as e:
+        print(f"[CHILL] ❌ Erreur d'envoi: {e}")

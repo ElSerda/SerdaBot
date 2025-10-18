@@ -18,6 +18,12 @@ from twitchio.ext import commands  # type: ignore
 
 from src.config.config import load_config
 from src.core.commands.ask_command import handle_ask_command
+from src.utils.cache_manager import load_cache
+from src.core.commands.cache_commands import (
+    handle_cacheadd_command,
+    handle_cacheclear_command,
+    handle_cachestats_command,
+)
 from src.core.commands.chill_command import handle_chill_command
 from src.core.commands.donation_command import handle_donation_command
 from src.core.commands.game_command import handle_game_command
@@ -33,20 +39,19 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
     comme la traduction automatique, la gestion du spam et diverses commandes utilitaires.
     """
 
-    def __init__(self, config):
-        super().__init__(
-            token=config["twitch"]["token"],
-            prefix="!",
-            initial_channels=[config["bot"]["channel"]],
-        )
-        self.config = config
+    def __init__(self, config_path: str = 'src/config/config.yaml'):
+        self.config = load_config(config_path)
+        
+        # Initialise le cache (avec reset si mode expérimental)
+        reset_cache = self.config.get("bot", {}).get("reset_cache_on_boot", False)
+        load_cache(reset=reset_cache)
         self.cooldowns = {}
-        self.botname = config["bot"]["name"].lower()
-        self.enabled = config["bot"].get("enabled_commands", [])
+        self.botname = self.config["bot"]["name"].lower()
+        self.enabled = self.config["bot"].get("enabled_commands", [])
 
         # Initialize translator
         self.translator = Translator()
-        self.auto_translate = config["bot"].get("auto_translate", True)
+        self.auto_translate = self.config["bot"].get("auto_translate", True)
 
     async def event_ready(self):
         print(f'\n🤖 Connected to Twitch chat as {self.nick}')
@@ -415,6 +420,19 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
             await self.run_with_cooldown(
                 user, lambda: handle_ask_command(message, self.config, query, now)
             )
+
+        elif cleaned.startswith("!cacheadd "):
+            # Commande admin: ajouter un fait au cache
+            args = content[10:].strip()
+            await handle_cacheadd_command(message, self.config, args)
+
+        elif cleaned == "!cachestats":
+            # Commande admin: statistiques du cache
+            await handle_cachestats_command(message, self.config)
+
+        elif cleaned == "!cacheclear":
+            # Commande admin: vider le cache (DANGER)
+            await handle_cacheclear_command(message, self.config)
 
         elif cleaned.startswith("!donationserda") or cleaned.startswith("!serdakofi"):
             # Commandes de donation/support spécifiques à El_Serda
