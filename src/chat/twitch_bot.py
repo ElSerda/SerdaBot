@@ -46,6 +46,13 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
         else:
             self.config = load_config(config_or_path)
         
+        # Initialize TwitchIO Bot parent class
+        super().__init__(
+            token=self.config["twitch"]["token"],
+            prefix='!',
+            initial_channels=[self.config["bot"]["channel"]]
+        )
+        
         # Initialise le cache (avec reset si mode expérimental)
         reset_cache = self.config.get("bot", {}).get("reset_cache_on_boot", False)
         load_cache(reset=reset_cache)
