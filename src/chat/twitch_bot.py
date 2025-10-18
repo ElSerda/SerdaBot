@@ -314,14 +314,17 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
             parts = content.split()
             if len(parts) > 1:
                 word = " ".join(parts[1:])  # Support phrases avec espaces
+                print(f"[AUTOMOD] 📞 Appel API add_blocked_term pour '{word}'...")
                 result = await self.automod.add_blocked_term(word)
                 if result:
+                    print(f"[AUTOMOD] ✅ Confirmation : mot '{word}' ajouté avec succès")
                     await self.safe_send(
                         message.channel,
                         f"🚫 Mot '{word}' ajouté à l'AutoMod Twitch ! "
                         f"Les messages avec ce mot seront bloqués automatiquement."
                     )
                 else:
+                    print(f"[AUTOMOD] ❌ Échec : mot '{word}' n'a pas pu être ajouté")
                     await self.safe_send(message.channel, "❌ Erreur lors de l'ajout (vérifier scopes OAuth).")
             else:
                 await self.safe_send(message.channel, f"@{user} Usage: !addbanword <mot>")

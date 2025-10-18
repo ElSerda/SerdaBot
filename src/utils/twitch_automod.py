@@ -61,7 +61,9 @@ class TwitchAutoMod:
                 async with session.post(url, headers=self.headers, json=data) as resp:
                     if resp.status == 200:
                         result = await resp.json()
-                        return result.get("data", [{}])[0]
+                        term_data = result.get("data", [{}])[0]
+                        print(f"[AUTOMOD] ✅ Mot '{text}' ajouté avec succès (ID: {term_data.get('id', 'N/A')})")
+                        return term_data
                     else:
                         error_text = await resp.text()
                         print(f"[AUTOMOD] ❌ Erreur API add_blocked_term ({resp.status}): {error_text}")
@@ -91,6 +93,7 @@ class TwitchAutoMod:
             async with aiohttp.ClientSession() as session:
                 async with session.delete(url, headers=self.headers, params=params) as resp:
                     if resp.status == 204:
+                        print(f"[AUTOMOD] ✅ Mot retiré avec succès (ID: {term_id})")
                         return True
                     else:
                         error_text = await resp.text()
@@ -119,7 +122,9 @@ class TwitchAutoMod:
                 async with session.get(url, headers=self.headers, params=params) as resp:
                     if resp.status == 200:
                         result = await resp.json()
-                        return result.get("data", [])
+                        terms = result.get("data", [])
+                        print(f"[AUTOMOD] ✅ Récupéré {len(terms)} mot(s) banni(s)")
+                        return terms
                     else:
                         error_text = await resp.text()
                         print(f"[AUTOMOD] ❌ Erreur API get_blocked_terms ({resp.status}): {error_text}")
@@ -170,6 +175,7 @@ class TwitchAutoMod:
             async with aiohttp.ClientSession() as session:
                 async with session.put(url, headers=self.headers, json=data) as resp:
                     if resp.status == 200:
+                        print(f"[AUTOMOD] ✅ Niveau AutoMod configuré: {level}")
                         return True
                     else:
                         error_text = await resp.text()
