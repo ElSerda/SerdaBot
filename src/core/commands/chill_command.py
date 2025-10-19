@@ -1,14 +1,12 @@
 """Command handler for chill/sarcastic bot responses."""
 
 import re
-import time
 from datetime import datetime
 
 from twitchio import Message  # pyright: ignore[reportPrivateImportUsage]
 
 from prompts.prompt_loader import make_prompt
 from utils.model_utils import call_model
-from utils.game_selector import match_selection
 
 
 async def extract_game_name_from_query(query: str, use_llm_fallback: bool = True) -> str:
@@ -256,12 +254,12 @@ async def handle_chill_command(message: Message, config: dict, now, conversation
                     if debug:
                         print("[CHILL] ❌ IGDB: Aucune donnée trouvée")
                     # Fallback: suggérer !gameinfo
-                    response = f"{response} Essaye `!gameinfo {game_name}` pour plus d'infos !"
+                    response = f"Je ne trouve pas de données récentes. Essaye `!gameinfo {game_name}` pour plus d'infos !"
             else:
                 if debug:
                     print("[CHILL] ⚠️ Impossible d'extraire le nom du jeu")
                 # Fallback générique
-                response = f"{response} Essaye `!gameinfo [nom du jeu]` pour plus d'infos !"
+                response = "Je ne suis pas sûr. Essaye `!gameinfo [nom du jeu]` pour plus d'infos !"
 
     if debug:
         print(f"[CHILL] 📨 Réponse du modèle: {response[:100] if response else 'VIDE'}...")

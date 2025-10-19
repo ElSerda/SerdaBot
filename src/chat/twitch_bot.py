@@ -40,12 +40,15 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
     comme la traduction automatique, la gestion du spam et diverses commandes utilitaires.
     """
 
-    def __init__(self, config_or_path = 'src/config/config.yaml'):
+    def __init__(self, config_or_path: dict | str = 'src/config/config.yaml'):
         # Support à la fois dict (déjà chargé) et string (path à charger)
+        config: dict
         if isinstance(config_or_path, dict):
-            self.config = config_or_path
+            config = config_or_path
         else:
-            self.config = load_config(config_or_path)
+            config = load_config(config_or_path)
+        
+        self.config: dict = config
         
         # Initialize TwitchIO Bot parent class
         super().__init__(
