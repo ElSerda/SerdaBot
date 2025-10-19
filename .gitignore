@@ -86,3 +86,4 @@ cache/
 # Benchmark results (local testing)
 scripts/*_results.json
 scripts/BENCHMARK_REPORT.md
+scripts/test_*.sh
