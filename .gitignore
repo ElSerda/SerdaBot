@@ -18,6 +18,7 @@ data/blocked_sites.json
 
 # === PERSONAL FOLDER ===
 personnal/
+_local-archives/
 
 # === PROMPTS (Easter Eggs & Personal) ===
 src/prompts/prompt_*_elserda.txt
