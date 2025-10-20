@@ -358,6 +358,19 @@ async def handle_chill_command(message: Message, config: dict, now, conversation
     if debug:
         print(f"[LLM] 📨 Réponse: size={len(response) if response else 0} chars | latence={llm_time:.0f}ms | preview='{response[:60] if response else 'VIDE'}...'")
 
+    # Si tous les LLM ont échoué (LM Studio + OpenAI) → fallback répliques
+    if response is None:
+        if debug:
+            print(f"[CHILL] 🤖 Tous LLM indisponibles → fallback répliques")
+        fallback_msg = get_fallback_response("chill")
+        try:
+            await message.channel.send(f"@{user_name} {fallback_msg}")
+            if debug:
+                print(f"[CHILL] ✅ Fallback error envoyé: {fallback_msg}")
+        except Exception as e:
+            print(f"[SEND] ❌ Erreur envoi fallback: {e}")
+        return
+    
     if not response:
         await message.channel.send("🤷 Réponse manquante.")
         return

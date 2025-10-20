@@ -45,7 +45,51 @@ if llm_mode == "auto":
 - ✅ **0 latence** sur les commandes (décision déjà prise)
 - ✅ Détection **silencieuse** (pas de spam réseau)
 
-### 2. Système de réponses fallback
+### 2. Système de fallback en cascade (NEW!)
+
+**3 niveaux de fallback automatiques** :
+
+```
+Commande !ask
+      ↓
+┌─────────────────────┐
+│ 1️⃣ LM Studio (local)│
+└──────────┬──────────┘
+           │ ❌ Timeout/Error
+           ↓
+┌─────────────────────┐
+│ 2️⃣ OpenAI API       │
+└──────────┬──────────┘
+           │ ❌ No API key / Error
+           ↓
+┌─────────────────────┐
+│ 3️⃣ Répliques fun    │  ← TOUJOURS disponible
+└─────────────────────┘
+```
+
+**Code interne** (`call_model()`) :
+```python
+# Niveau 1 : Essayer LM Studio
+result = await try_endpoint(api_url, ...)
+if result:
+    return result  # ✅ Succès
+
+# Niveau 2 : Essayer OpenAI
+result = await try_openai_fallback(...)
+if result:
+    return result  # ✅ Succès
+
+# Niveau 3 : Retourner None
+return None  # ❌ Tous échoués → commandes utilisent fallback répliques
+```
+
+**Avantages** :
+- ✅ **Robustesse maximale** : 3 niveaux de sécurité
+- ✅ **Coût optimisé** : OpenAI seulement si LM Studio fail
+- ✅ **Expérience cohérente** : Bot toujours réactif
+- ✅ **Production-ready** : Crash LM Studio = 0 downtime
+
+### 3. Système de réponses fallback
 
 Quand le LLM n'est pas disponible, `src/core/fallbacks.py` fournit des réponses pré-définies :
 
@@ -65,23 +109,36 @@ response = get_fallback_response("chill")
 - `"ask"` : Réponses pour `!ask` (8 variantes)
 - `"chill"` : Réponses pour `@mention` (19 variantes)
 - `"ask_timeout"` : Timeout LLM (4 variantes)
-- `"ask_error"` : Erreur LLM (3 variantes)
+- `"ask_error"` : Erreur LLM (3 variantes) ← **Utilisé quand tous les LLM échouent**
 
 ### 3. Intégration dans les commandes
 
-Les commandes `!ask` et `!chill` vérifient automatiquement `llm_available` :
+Les commandes `!ask` et `!chill` gèrent automatiquement le fallback en cascade :
 
 ```python
 async def handle_ask_command(..., llm_available: bool = True):
-    # Si LLM indisponible → fallback immédiat
+    # Boot detection : Si LLM marqué indisponible au démarrage → fallback immédiat
     if not llm_available:
         fallback_msg = get_fallback_response("ask")
         await message.channel.send(f"@{user} {fallback_msg}")
         return
     
-    # Sinon → logique LLM normale
-    response = await call_model(...)
+    # Runtime cascade : Essayer LM Studio → OpenAI → Fallback répliques
+    response = await call_model(prompt, config, user=user, mode="ask")
+    
+    # Si tous les LLM ont échoué (retourne None) → fallback répliques
+    if response is None:
+        fallback_msg = get_fallback_response("ask_error")
+        await message.channel.send(f"@{user} {fallback_msg}")
+        return
+    
+    # Sinon → utiliser la réponse LLM normale
+    await message.channel.send(f"@{user} {response}")
 ```
+
+**Double sécurité** :
+- ✅ **Boot detection** : Si aucun LLM au démarrage → skip appel réseau
+- ✅ **Runtime cascade** : Si crash post-boot → fallback automatique
 
 ---
 
@@ -207,9 +264,24 @@ pytest tests/ -m "not llm"
      │            │
      ▼            ▼
 ┌──────────┐ ┌──────────┐
-│ Appel    │ │ Fallback │
-│ LLM      │ │ pré-def  │
-└──────────┘ └──────────┘
+│ Cascade  │ │ Fallback │
+│ LM→OpenAI│ │ direct   │
+└────┬─────┘ └────┬─────┘
+     │            │
+     ▼            ▼
+ ┌───────┐   ┌──────────┐
+ │LLM OK?│   │ Réplique │
+ └───┬───┘   │   fun    │
+     │       └──────────┘
+ ┌───┴───┐
+ │Fail?  │
+ └───┬───┘
+     │
+     ▼
+ ┌──────────┐
+ │ Réplique │
+ │   fun    │
+ └──────────┘
 ```
 
 ---
@@ -319,6 +391,19 @@ export LLM_MODE=disabled
 ./start_bot.sh
 ```
 
+### Le bot crashe si LM Studio tombe en plein live
+
+**Réponse** : ✅ **Non, il ne crashe pas !** Avec le système de cascade :
+
+```
+1. User: !ask Question
+2. Bot essaie LM Studio → timeout (10s max)
+3. Bot essaie OpenAI → fail (pas de clé)
+4. Bot envoie réplique fallback → "💀 Mes neurones bugguent, réessaie dans 2 min !"
+```
+
+**Résultat** : 0 downtime, expérience cohérente ! 🎯
+
 ### Les tests LLM échouent en local
 
 **Cause** : LM Studio non lancé.
@@ -328,6 +413,18 @@ export LLM_MODE=disabled
 # Option 1 : Lance LM Studio
 # Option 2 : Skip les tests LLM
 pytest tests/ -m "not llm"
+```
+
+### Comment savoir quel niveau de fallback a été utilisé ?
+
+**Logs** :
+```
+[MODEL] 🔗 Tentative LM Studio...
+[MODEL] ❌ LM_STUDIO failed: timeout
+[MODEL] 🌐 Utilisation du fallback OpenAI (si configuré)
+[MODEL] ⚠️ Pas de clé OpenAI configurée
+[ASK] 🤖 Tous LLM indisponibles → fallback répliques
+[ASK] ✅ Fallback error envoyé: 💀 Mes neurones bugguent...
 ```
 
 ---
@@ -365,6 +462,15 @@ R: Oui ! Le bot peut passer de l'un à l'autre (ex: LLM crash en live → fallba
 
 **Q: Faut-il modifier le code pour ajouter des réponses ?**  
 R: Non, utilise `add_custom_fallback()` en runtime ou édite `fallbacks.py`.
+
+**Q: Que se passe-t-il si LM Studio crash pendant un live ?**  
+R: Cascade automatique : LM Studio (fail) → OpenAI (si configuré) → Répliques fun. **0 downtime** ! 🎯
+
+**Q: Combien coûte l'utilisation d'OpenAI en fallback ?**  
+R: Seulement si LM Studio échoue. Avec `gpt-4o-mini` : ~0.0001$ par réponse (négligeable).
+
+**Q: Peut-on désactiver OpenAI et garder seulement LM Studio + Répliques ?**  
+R: Oui ! Laisse la section `openai` vide dans `config.yaml` → cascade LM Studio → Répliques directement.
 
 ---
 

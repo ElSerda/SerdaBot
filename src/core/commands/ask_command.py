@@ -274,6 +274,19 @@ async def handle_ask_command(message: Message, config: dict, question: str, now,
     
     response = await call_model(prompt, config, user=user, mode="ask")
 
+    # Si tous les LLM ont échoué (LM Studio + OpenAI) → fallback répliques
+    if response is None:
+        if debug:
+            print(f"[ASK] 🤖 Tous LLM indisponibles → fallback répliques")
+        fallback_msg = get_fallback_response("ask_error")
+        try:
+            await message.channel.send(f"@{user} {fallback_msg}")
+            if debug:
+                print(f"[ASK] ✅ Fallback error envoyé: {fallback_msg}")
+        except Exception as e:
+            print(f"[SEND] ❌ Erreur envoi fallback: {e}")
+        return
+    
     if not response:
         await message.channel.send(f"@{user} ⚠️ Erreur ou pas de réponse.")
         return

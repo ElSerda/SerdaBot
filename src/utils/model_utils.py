@@ -50,10 +50,19 @@ async def call_model(
     user: Optional[str] = None,
     timeout: Optional[int] = None,
     mode: str = "chill",
-) -> str:
+) -> Optional[str]:
     """Call the preferred model endpoint, falling back to OpenAI if needed.
 
-    Returns the model response as a string or an empty string on failure.
+    Returns:
+        str: LLM response content (success)
+        None: All LLMs unavailable → caller should use fallback responses
+    
+    Cascade behavior:
+        1. Try LM Studio (local) → if success, return response
+        2. Try OpenAI (cloud) → if success, return response  
+        3. All failed → return None (fallback to fun responses)
+    
+    Note: None means "no LLM available", empty string "" means "LLM responded but empty".
     """
 
     effective_timeout = timeout if timeout is not None else config.get("bot", {}).get("model_timeout", 10)
@@ -161,8 +170,13 @@ async def try_endpoint(
         return ""
 
 
-async def try_openai_fallback(prompt: str, config: dict, user: Optional[str], mode: str = "chill") -> str:
-    """Fallback to OpenAI Async client. Returns string or an explanatory message on failure."""
+async def try_openai_fallback(prompt: str, config: dict, user: Optional[str], mode: str = "chill") -> Optional[str]:
+    """Fallback to OpenAI Async client.
+    
+    Returns:
+        str: OpenAI response (success)
+        None: No API key or OpenAI failed
+    """
 
     try:
         # Dynamic import to avoid hard dependency at import time
@@ -170,7 +184,8 @@ async def try_openai_fallback(prompt: str, config: dict, user: Optional[str], mo
 
         api_key = config.get("openai", {}).get("api_key")
         if not api_key or not api_key.startswith("sk-"):
-            return "❌ Tous les modèles locaux indisponibles et pas de clé OpenAI"
+            print("[MODEL] ⚠️ Pas de clé OpenAI configurée")
+            return None
 
         input_chars = len(prompt)
         input_tokens = estimate_tokens(prompt)
@@ -201,7 +216,8 @@ async def try_openai_fallback(prompt: str, config: dict, user: Optional[str], mo
 
         result = (result or "").strip()
         if not result:
-            return "❌ Réponse vide d'OpenAI"
+            print("[MODEL] ⚠️ Réponse vide d'OpenAI")
+            return None
 
         output_chars = len(result)
         output_tokens = estimate_tokens(result)
@@ -214,4 +230,4 @@ async def try_openai_fallback(prompt: str, config: dict, user: Optional[str], mo
 
     except Exception as e:
         print(f"[MODEL] ❌ OpenAI fallback failed: {e}")
-        return "💀 SerdaBot en mode survie ! Tous mes cerveaux sont KO. Revenez dans 2 min ! 🔄"
+        return None
