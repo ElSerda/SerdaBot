@@ -66,6 +66,30 @@ PROJECT_STRUCTURE.md
 TODO.md
 TODO-DEV/
 
+# === SESSION NOTES (Personal, non-reproducible) ===
+SESSION_*.md
+ALPHA_*.md
+VALIDATION_*.md
+HOTFIX_*.md
+TEST_MOD_*.md
+*_RECAP*.md
+notes.txt
+idees.md
+debug_log.txt
+
+# === MANUAL TESTS (One-shot, à la racine) ===
+test_*.py
+!tests/test_*.py
+manual_test_*.py
+tmp_*.py
+debug_*.py
+
+# === DUMPS & RESULTS (Temporary data) ===
+*_results.txt
+*_dump*.txt
+comparison_*.txt
+cache_dump_*.txt
+
 # === PYTEST & COVERAGE ===
 .coverage
 .pytest_cache/
