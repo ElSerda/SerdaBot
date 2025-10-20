@@ -1,0 +1,26 @@
+{
+  "gameinfo": {
+    "description": "Récupère les informations complètes d'un jeu vidéo depuis IGDB/RAWG : date de sortie, plateformes, note, synopsis. À utiliser pour toute question sur dates/infos/plateformes de jeu.",
+    "module": "src.core.commands.game_command",
+    "function": "handle_game_command",
+    "args_type": "game_name"
+  },
+  "ask_knowledge": {
+    "description": "Pose une question complexe nécessitant recherche web ou expertise technique. Pour hardware PC/console, actualités tech, tutoriels, comparaisons.",
+    "module": "src.core.commands.ask_command",
+    "function": "handle_ask_command",
+    "args_type": "question"
+  },
+  "stream_info": {
+    "description": "Récupère les infos du stream Twitch en cours : jeu joué, titre du stream. Pour 'tu joues à quoi?', 'c'est quoi ce jeu?'.",
+    "module": "src.utils.stream_utils",
+    "function": "get_stream_info",
+    "args_type": "none"
+  },
+  "donation_links": {
+    "description": "Retourne les liens de donation/support pour ElSerda (Ko-fi). Pour 'comment supporter?', 'liens de don?'.",
+    "module": "src.utils.donation_utils",
+    "function": "get_donation_links",
+    "args_type": "none"
+  }
+}

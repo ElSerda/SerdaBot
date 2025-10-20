@@ -11,6 +11,7 @@ Le bot utilise TwitchIO comme base et ajoute des fonctionnalités personnalisée
 
 import asyncio
 import re
+import sys
 import traceback
 from datetime import datetime, timedelta
 
@@ -31,6 +32,18 @@ from src.utils.translator import Translator
 from src.utils.twitch_automod import TwitchAutoMod
 
 CONFIG = load_config()
+
+
+# Gestionnaire global pour capturer les exceptions non gérées
+def handle_exception(exc_type, exc_value, exc_traceback):
+    if issubclass(exc_type, KeyboardInterrupt):
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        return
+    print("[ERROR] Une exception non gérée a été capturée :")
+    print("".join(traceback.format_exception(exc_type, exc_value, exc_traceback)))
+
+
+sys.excepthook = handle_exception
 
 
 class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
@@ -81,46 +94,94 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
             print(f"⚠️ AutoMod désactivé (config manquante): {e}")
             self.automod_enabled = False
 
+        # Track first connection for welcome message
+        self._first_connect_done = False
+        
+        # Reconnection tracking (TwitchIO 2.x native - Solution optimisée)
+        self._booted = False
+        self._channel_joined_once = False  # Track première connexion vs reconnexion
+        self._last_reconnect_announce = 0  # Timestamp pour cooldown anti-spam
+
     async def event_ready(self):
         print(f'\n🤖 Connected to Twitch chat as {self.nick}')
         self._display_model_config()
         print("☕️ Boot complete.")
         print("🤖 SerdaBot is online and ready.")
-        
-        # Send connect message if configured
-        connect_message = self.config["bot"].get("connect_message", "").strip()
-        if connect_message and self.connected_channels:
-            await self.safe_send(self.connected_channels[0], connect_message)
+        self._booted = True
+
+        # Envoie le message de connexion uniquement à la première connexion
+        if not self._first_connect_done:
+            self._first_connect_done = True
+            connect_message = self.config["bot"].get("connect_message", "").strip()
+            if connect_message and self.connected_channels:
+                try:
+                    await self.safe_send(self.connected_channels[0], connect_message)
+                except Exception as e:
+                    print(f"[ERROR] Impossible d'envoyer le message de connexion : {e}")
 
     def _display_model_config(self):
-        """Affiche la configuration du modèle au démarrage.
+        """Affiche la configuration du modèle au démarrage."""
+        try:
+            print("\n🧠 === CONFIGURATION MODÈLE ===")
 
-        Cette méthode privée affiche les informations de configuration du modèle, notamment :
-        - L'endpoint utilisé (LM Studio, FastAPI, ou externe)
-        - Le modèle OpenAI de fallback si configuré
-        - La liste des commandes activées
+            # Endpoint externe (LM Studio/FastAPI)
+            endpoint = self.config["bot"].get("model_endpoint") or self.config["bot"].get("api_url")
+            if endpoint:
+                endpoint_type = (
+                    "LM Studio"
+                    if "1234" in endpoint
+                    else "FastAPI" if "8000" in endpoint else "Externe"
+                )
+                print(f"🌐 {endpoint_type}: {endpoint}")
+
+            # OpenAI fallback
+            if self.config["bot"].get("model_type") == "openai":
+                model = self.config["bot"].get("openai_model", "gpt-3.5-turbo")
+                print(f"🌐 Fallback: OpenAI ({model})")
+
+            # Commandes activées
+            enabled = self.config["bot"].get("enabled_commands", [])
+            print(f"⚡ Commandes: {', '.join(enabled)}")
+            print("=" * 35)
+        except Exception as e:
+            print(f"[ERROR] Une erreur s'est produite lors de l'affichage de la configuration : {e}")
+
+    def _is_bot_mentioned(self, message, content: str, cleaned: str) -> bool:
+        """Vérifie si le bot est mentionné dans le message.
+        
+        Détecte 3 types de mentions:
+        1. Nom du bot dans le message (ex: "serdabot tu es là?")
+        2. Mention @ (ex: "@serdabot bonjour")
+        3. Réponse Twitch (bouton "Répondre" dans le chat)
+        
+        Args:
+            message: L'objet message TwitchIO
+            content: Le contenu brut du message
+            cleaned: Le contenu nettoyé (sans caractères spéciaux)
+            
+        Returns:
+            bool: True si le bot est mentionné
         """
-        print("\n🧠 === CONFIGURATION MODÈLE ===")
-
-        # Endpoint externe (LM Studio/FastAPI)
-        endpoint = self.config["bot"].get("model_endpoint") or self.config["bot"].get("api_url")
-        if endpoint:
-            endpoint_type = (
-                "LM Studio"
-                if "1234" in endpoint
-                else "FastAPI" if "8000" in endpoint else "Externe"
-            )
-            print(f"� {endpoint_type}: {endpoint}")
-
-        # OpenAI fallback
-        if self.config["bot"].get("model_type") == "openai":
-            model = self.config["bot"].get("openai_model", "gpt-3.5-turbo")
-            print(f"🌐 Fallback: OpenAI ({model})")
-
-        # Commandes activées
-        enabled = self.config["bot"].get("enabled_commands", [])
-        print(f"⚡ Commandes: {', '.join(enabled)}")
-        print("=" * 35)
+        # 1. Vérifier si le nom du bot est dans le message nettoyé (méthode originale)
+        words = re.findall(r"\b\w+\b", cleaned)
+        if self.botname in words:
+            return True
+        
+        # 2. Vérifier les mentions @ dans le contenu original
+        # Pattern: @botname (au début ou milieu de phrase)
+        mention_pattern = rf"@{re.escape(self.botname)}\b"
+        if re.search(mention_pattern, content.lower()):
+            return True
+        
+        # 3. Vérifier si c'est une réponse Twitch au bot
+        # TwitchIO expose les tags IRC via message.tags
+        if hasattr(message, 'tags') and message.tags:
+            # Le tag 'reply-parent-user-login' contient le nom de l'utilisateur auquel on répond
+            reply_parent = message.tags.get('reply-parent-user-login', '').lower()
+            if reply_parent == self.botname:
+                return True
+        
+        return False
 
     async def run_with_cooldown(self, user, action):
         """Execute action with cooldown management and error handling."""
@@ -165,12 +226,12 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
         now = datetime.now()
         cooldown = self.config["bot"].get("cooldown", 60)
         
-        # Remove any @mention from start of content (for command parsing)
-        # Ex: "@serda_bot !gameinfo Plants vs Zombies" → "!gameinfo Plants vs Zombies"
-        # Simpler: works for any @mention, not just our bot
+        # Remove @mention from start for command parsing
         content_without_mention = re.sub(r"^@\w+\s+", "", content)
-        
         cleaned = re.sub(r"[^\w\s!?]", "", content_without_mention.lower())
+        
+        # Check if bot is mentioned (nom, @mention, ou reply Twitch)
+        is_mentioned = self._is_bot_mentioned(message, content, cleaned)
 
         # === CHECK BOT WHITELIST/BLACKLIST ===
         if self.translator.should_ignore_bot(user):
@@ -574,18 +635,14 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
             await handle_cacheclear_command(message, self.config)
 
         elif cleaned.startswith("!donationserda") or cleaned.startswith("!serdakofi"):
-            # Commandes de donation/support spécifiques à El_Serda
             await self.run_with_cooldown(
                 user, lambda: handle_donation_command(message, self.config, now)
             )
 
-        elif self.botname in cleaned and "chill" in self.enabled:
-            # Mention du bot → Mode chill fun/cool (réponses ultra-courtes 1-5 mots)
-            words = re.findall(r"\b\w+\b", cleaned)
-            if self.botname in words:
-                await self.run_with_cooldown(
-                    user, lambda: handle_chill_command(message, self.config, now)
-                )
+        elif is_mentioned and "chill" in self.enabled:
+            await self.run_with_cooldown(
+                user, lambda: handle_chill_command(message, self.config, now)
+            )
 
     async def safe_send(self, channel, content):
         """Envoie un message de manière sécurisée avec gestion des erreurs.
@@ -607,21 +664,79 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
         except (ValueError, RuntimeError) as e:
             print(f"❌ Erreur d'envoi du message: {e}")
 
+    async def event_reconnect(self):
+        """Événement appelé par TwitchIO quand le serveur IRC envoie RECONNECT.
+        
+        TwitchIO 2.x reconnecte automatiquement après cet événement.
+        L'annonce sera faite dans event_channel_joined() au retour.
+        """
+        print("\n" + "="*60)
+        print("[RECONNECT] 📨 Message RECONNECT reçu de Twitch")
+        print("[RECONNECT] ⏳ TwitchIO va reconnecter automatiquement...")
+        print("="*60 + "\n")
+    
+    async def event_error(self, error, data=None):
+        """Filet de sécurité: détecte et log les erreurs.
+        
+        Les erreurs réseau déclenchent une reconnexion auto de TwitchIO.
+        L'annonce sera faite dans event_channel_joined() au retour.
+        """
+        exc_name = type(error).__name__ if error else "Unknown"
+        print(f"[ERROR] ⚠️ Erreur détectée: {exc_name}")
+        
+        # Log spécifique pour les erreurs réseau
+        if any(k in exc_name for k in ("ConnectionClosed", "WebSocket", "Timeout", "ConnectionError")):
+            print(f"[ERROR] 🔌 Erreur de connexion → TwitchIO va reconnecter automatiquement")
+        
+        # Affiche l'erreur pour debug
+        if error:
+            import traceback
+            traceback.print_exception(type(error), error, error.__traceback__)
+    
+    async def event_channel_joined(self, channel):
+        """Événement appelé quand le bot (re)joint un salon (TwitchIO 2.10+).
+        
+        C'est ici qu'on annonce le retour après une reconnexion.
+        """
+        print(f"[JOIN] ✅ Bot rejoint le salon: {channel.name}")
+        
+        # Si c'est la première fois qu'on joint, on marque juste
+        if not self._channel_joined_once:
+            self._channel_joined_once = True
+            print("[JOIN] 📍 Première connexion au salon")
+            return
+        
+        # Si on avait déjà joint avant, c'est une RECONNEXION
+        if self._booted:
+            print("[RECONNECT] 🎉 Reconnexion détectée! Annonce dans le chat...")
+            
+            # Cooldown anti-spam
+            now = datetime.now().timestamp()
+            cooldown = self.config.get("reconnect_announce_cooldown", 10)
+            if now - self._last_reconnect_announce < cooldown:
+                print(f"[RECONNECT] ⏳ Cooldown actif ({cooldown}s), message ignoré")
+                return
+            
+            self._last_reconnect_announce = now
+            try:
+                await channel.send("Me revoilà, petite coupure de connexion ! 🔌")
+                print("[RECONNECT] ✅ Message envoyé avec succès")
+            except Exception as e:
+                print(f"[RECONNECT] ❌ Impossible d'envoyer le message: {e}")
+    
+
 
 def run_bot(config):
-    """Lance le bot Twitch avec la configuration donnée.
-
-    Args:
-        config: La configuration du bot (chargée depuis config.yaml)
-    """
-
+    """Lance le bot Twitch avec la configuration donnée."""
     async def main():
-        """Fonction principale asynchrone pour démarrer le bot."""
         bot = TwitchBot(config)
         await bot.start()
 
     asyncio.run(main())
 
-
 if __name__ == "__main__":
-    run_bot(CONFIG)
+    try:
+        run_bot(CONFIG)
+    except Exception as e:
+        print(f"[CRITICAL] Une erreur critique s'est produite : {e}")
+        traceback.print_exc()

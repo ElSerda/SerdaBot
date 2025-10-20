@@ -1,20 +1,19 @@
-"""Command handler for game information lookup."""
+"""
+Command handler for game information lookup.
+
+Version refactorée avec RAWG comme source prioritaire.
+Architecture propre avec séparation des responsabilités.
+"""
 
 import json
-from datetime import datetime
 
 from twitchio import Message  # pyright: ignore[reportPrivateImportUsage]
 
-from utils.game_utils import (
-    choose_best_summary,
-    clean_summary,
-    compress_platforms,
-    fetch_game_data,
-    fetch_steam_summary,
-    normalize_platforms,
-    sanitize_slug,
-)
+from core.cache import GAME_CACHE, get_cache_key, get_ttl_for_game
+from utils.game_utils import compress_platforms, normalize_platforms, sanitize_slug
 from utils.translator import Translator
+
+from .api import fetch_game_data  # Nouveau module API centralisé
 
 
 def clean_translation(text: str) -> str:
@@ -32,32 +31,46 @@ def clean_translation(text: str) -> str:
 
 
 async def handle_game_command(message: Message, config: dict, game_name: str, now):  # pylint: disable=unused-argument
-    """Handle the !gameinfo command to fetch game information."""
+    """
+    Handler de la commande !gameinfo - Version refactorée.
+    
+    Délègue la récupération des données à api.fetch_game_data()
+    qui gère la priorité RAWG → IGDB → Web scraping.
+    
+    Args:
+        message: Message Twitch
+        config: Configuration globale du bot
+        game_name: Nom du jeu recherché
+        now: Timestamp actuel (pour cooldown, unused)
+    """
     user = (message.author.name or "user").lower()
     debug = config["bot"].get("debug", False)
     cooldown = config["bot"].get("cooldown", 60)
 
-    # Initialize translator
-    translator = Translator()
-
+    # Validation
     if not game_name.strip():
         await message.channel.send(
-            f"@{user} Tu as oublié de spécifier un jeu. Utilise la commande `!game nom_du_jeu`."
+            f"@{user} Tu as oublié de spécifier un jeu. Utilise `!gameinfo nom_du_jeu`."
         )
         if debug:
             print(f"[GAME] ⚠️ Requête vide ignorée de @{user}")
         return
 
-    await message.channel.send("🎮 Recherche du jeu...")
-    try:
-        data = await fetch_game_data(game_name)
-
+    # 🔍 VÉRIFICATION DU CACHE
+    cache_key = get_cache_key("gameinfo", game_name)
+    cached_message = GAME_CACHE.get(cache_key)
+    
+    if cached_message:
         if debug:
-            debug_data = {k: v for k, v in data.items() if k != "summary"}
-            print(
-                "[GAME] 🔎 Données brutes API (hors summary) :\n"
-                + json.dumps(debug_data, indent=2, ensure_ascii=False)
-            )
+            print(f"[GAME] ⚡ Cache HIT pour '{game_name}'")
+        await message.channel.send(cached_message)
+        return
+
+    await message.channel.send("🎮 Recherche du jeu...")
+    
+    try:
+        # 🔥 RÉCUPÉRATION via le nouveau module API (RAWG prioritaire)
+        data = await fetch_game_data(game_name, config)
 
         if not data:
             await message.channel.send(f"❌ Jeu introuvable : {game_name}")
@@ -65,120 +78,173 @@ async def handle_game_command(message: Message, config: dict, game_name: str, no
                 print(f"[GAME] ❌ Aucun résultat pour '{game_name}'")
             return
 
-        name = data.get("name", "Inconnu")
-        summary_raw = data.get("summary", "")
-        slug = data.get("slug", "")
-        igdb_url = f"https://www.igdb.com/games/{sanitize_slug(slug or name)}"
-
-        summary_igdb = clean_summary(summary_raw, name)
-        summary_steam = await fetch_steam_summary()
-        summary, source, lang_igdb, lang_steam = await choose_best_summary(
-            summary_igdb, summary_steam
-        )
-
-        # Simple language detection and translation using our translator
-        translated = summary
-        try:
-            # If summary looks like English, translate it
-            if any(
-                word in summary.lower()
-                for word in ['the', 'and', 'you', 'with', 'for', 'this', 'that']
-            ):
-                input_len = len(summary)
-                input_tokens = input_len // 4  # Estimation: ~4 chars = 1 token
-                print(f"[METRICS-GAME] 🌐 Traduction EN→FR: {input_len} chars (~{input_tokens} tokens)")
-
-                result = translator.translate(summary, source='en', target='fr')
-                if result and not result.startswith('⚠️'):  # Translation succeeded
-                    translated = result
-                    output_len = len(translated)
-                    output_tokens = output_len // 4
-                    print(f"[METRICS-GAME] ✅ Traduit: {output_len} chars (~{output_tokens} tokens)")
-                else:
-                    print("[METRICS-GAME] ⚠️ Traduction échouée, texte original conservé")
-        except (RuntimeError, ValueError, KeyError) as e:
-            if debug:
-                print(f"[GAME] ⚠️ Translation error: {e}")
-
-        translated = clean_translation(translated)
-
-        # Gestion des dates
-        release_ts = data.get("first_release_date")
-        if not release_ts:
-            release_dates = data.get("release_dates", [])
-            if release_dates and isinstance(release_dates, list):
-                for entry in release_dates:
-                    if isinstance(entry, dict) and entry.get("date"):
-                        release_ts = entry["date"]
-                        break
-        if not release_ts:
-            release_ts = data.get("release")
-
-        try:
-            if release_ts is not None:
-                release_ts = int(release_ts)
-                release_year = datetime.utcfromtimestamp(release_ts).strftime('%Y')
-            else:
-                release_year = "?"
-        except (ValueError, TypeError) as e:
-            if debug:
-                print(f"[GAME] ⚠️ Erreur date release_ts: {release_ts} → {e}")
-            release_year = "?"
-
         if debug:
-            print(f"[GAME] Date brute : {release_ts} → année : {release_year}")
+            debug_data = {k: v for k, v in data.items() if k not in ["summary", "background_image"]}
+            print(
+                "[GAME] 🔎 Données brutes API (hors summary) :\n"
+                + json.dumps(debug_data, indent=2, ensure_ascii=False)
+            )
 
-        # Construction du message
-        base = f"@{user} 🎮 {name}"
-        base += f" ({release_year})" if release_year != "?" else "(date inconnue)"
-
-        platforms = compress_platforms(normalize_platforms(data.get("platforms", [])))
-        base += f", {', '.join(platforms)}" if platforms else ",plateformes inconnues"
-
-        game_modes = data.get("game_modes", [])
-        if not game_modes and "mode" in data:
-            game_modes = [{"name": data["mode"]}]
-        mode_display = ""
-        if isinstance(game_modes, list):
-            modes = []
-            for mode in game_modes:
-                name = mode.get("name", "") if isinstance(mode, dict) else str(mode)
-                if "single" in name.lower():
-                    modes.append("Solo")
-                elif "multi" in name.lower():
-                    modes.append("Multi")
-            if modes:
-                mode_display = " - " + ", ".join(sorted(set(modes)))
-
-        suffix = f" ({igdb_url}) ({cooldown}s)"
-        max_chars = 500 - len(base) - len(suffix) - len(mode_display) - 3 - 20
-
-        if len(translated) > max_chars:
-            cut_dot = translated[:max_chars].rfind(". ")
-            cut_comma = translated[:max_chars].rfind(",")
-            if cut_dot > 100:
-                translated = translated[:cut_dot + 1].strip()
-            elif cut_comma > 100:
-                translated = translated[:cut_comma + 1].strip()
-            else:
-                translated = translated[:max_chars].strip() + "…"
-
-        final = f"{base}{mode_display} :\n{translated}{suffix}"
-
-        # Métriques finales
-        final_len = len(final)
-        final_tokens = final_len // 4
-        print(f"[METRICS-GAME] 📤 Message final: {final_len} chars (~{final_tokens} tokens)")
-
-        await message.channel.send(final)
-
+        # 📊 FORMATAGE du message
+        message_text = await _format_game_message(data, user, config, debug, cooldown)
+        
+        # � MISE EN CACHE avec TTL adapté
+        release_year = data.get("release_year", "9999")
+        ttl = get_ttl_for_game(release_year)
+        GAME_CACHE.set(cache_key, message_text, ttl=ttl)
+        
         if debug:
-            print(f"[GAME] ✅ Résumé source : {source}")
-            print(f"[GAME] Langue IGDB: {lang_igdb}, Steam: {lang_steam}")
-            print(f"[GAME] IGDB URL : {igdb_url}")
-            print(f"[GAME] Plateformes : {platforms}")
-            print(f"[GAME] Modes de jeu : {mode_display.strip(' -')}")
+            print(f"[GAME] 💾 Mis en cache '{game_name}' (TTL: {ttl}s)")
+        
+        # �📤 ENVOI
+        await message.channel.send(message_text)
 
     except (RuntimeError, ValueError, KeyError, TypeError) as e:
         await message.channel.send(f"@{user} ⚠️ Erreur lors du traitement.")
         print(f"❌ [GAME] Exception : {e}")
+
+
+async def _format_game_message(
+    data: dict, 
+    user: str, 
+    config: dict, 
+    debug: bool,
+    cooldown: int
+) -> str:
+    """
+    Formate les données du jeu en message Twitch optimisé.
+    
+    Gère :
+    - Traduction EN→FR si nécessaire
+    - Formatage des notes/ratings (Metacritic, RAWG)
+    - Compression des plateformes
+    - Troncature intelligente de la description
+    - Construction du message final (<500 chars)
+    
+    Args:
+        data: Données normalisées du jeu (depuis RAWG ou IGDB)
+        user: Nom de l'utilisateur Twitch
+        config: Configuration du bot
+        debug: Mode debug activé
+        cooldown: Durée du cooldown à afficher
+    
+    Returns:
+        Message formaté prêt à envoyer sur Twitch
+    """
+    translator = Translator()
+    
+    # Extraction des données
+    name = data.get("name", "Inconnu")
+    summary_raw = data.get("summary", "")
+    slug = data.get("slug", "")
+    release_year = data.get("release_year", "?")
+    
+    # Notes et ratings (seulement si RAWG)
+    metacritic = data.get("metacritic")
+    rating = data.get("rating")
+    ratings_count = data.get("ratings_count", 0)
+    
+    # Developers et Publishers (seulement si RAWG)
+    developers = data.get("developers", [])
+    publishers = data.get("publishers", [])
+    
+    # URL IGDB (pour compatibilité)
+    igdb_url = f"https://www.igdb.com/games/{sanitize_slug(slug or name)}"
+    
+    # 🌐 TRADUCTION du résumé si nécessaire
+    summary = summary_raw
+    try:
+        # Détection simple: si mots anglais présents
+        if any(word in summary.lower() for word in ['the', 'and', 'you', 'with', 'for', 'this', 'that']):
+            input_len = len(summary)
+            input_tokens = input_len // 4
+            print(f"[METRICS-GAME] 🌐 Traduction EN→FR: {input_len} chars (~{input_tokens} tokens)")
+
+            result = translator.translate(summary, source='en', target='fr')
+            if result and not result.startswith('⚠️'):
+                summary = result
+                output_len = len(summary)
+                output_tokens = output_len // 4
+                print(f"[METRICS-GAME] ✅ Traduit: {output_len} chars (~{output_tokens} tokens)")
+            else:
+                print("[METRICS-GAME] ⚠️ Traduction échouée, texte original conservé")
+                
+    except (RuntimeError, ValueError, KeyError) as e:
+        if debug:
+            print(f"[GAME] ⚠️ Translation error: {e}")
+    
+    # Nettoyage des erreurs de traduction courantes
+    summary = clean_translation(summary)
+    
+    # 📝 CONSTRUCTION DU MESSAGE
+    # Ligne 1: @user 🎮 NomDuJeu (année), plateformes
+    base = f"@{user} 🎮 {name}"
+    base += f" ({release_year})" if release_year != "?" else " (date inconnue)"
+    
+    # Plateformes
+    platforms = compress_platforms(normalize_platforms(data.get("platforms", [])))
+    base += f", {', '.join(platforms)}" if platforms else ", plateformes inconnues"
+    
+    # Developers et Publishers (si disponibles)
+    if developers:
+        dev_str = ", ".join(developers[:2])  # Max 2 devs
+        base += f" | Dev: {dev_str}"
+    if publishers:
+        pub_str = ", ".join(publishers[:2])  # Max 2 publishers
+        base += f" | Pub: {pub_str}"
+    
+    # Ligne 2 (optionnelle): Notes et ratings
+    rating_line = ""
+    if metacritic or rating:
+        rating_parts = []
+        if metacritic:
+            rating_parts.append(f"⭐ Metacritic: {metacritic}/100")
+        if rating:
+            rating_parts.append(f"Note: {rating}/5")
+            if ratings_count > 0:
+                # Afficher le nombre d'avis de manière compacte
+                if ratings_count >= 1000:
+                    count_str = f"{ratings_count // 1000}k"
+                else:
+                    count_str = str(ratings_count)
+                rating_parts[-1] += f" ({count_str} avis)"
+        
+        rating_line = " | ".join(rating_parts)
+        if rating_line:
+            rating_line = "\n" + rating_line
+    
+    # Suffix avec lien et cooldown
+    suffix = f" ({igdb_url}) ({cooldown}s)"
+    
+    # Calcul de l'espace disponible pour la description
+    max_chars = 500 - len(base) - len(rating_line) - len(suffix) - 5  # Marge de sécurité
+    
+    # Troncature intelligente de la description
+    if len(summary) > max_chars:
+        cut_dot = summary[:max_chars].rfind(". ")
+        cut_comma = summary[:max_chars].rfind(", ")
+        
+        if cut_dot > 100:
+            summary = summary[:cut_dot + 1].strip()
+        elif cut_comma > 100:
+            summary = summary[:cut_comma + 1].strip()
+        else:
+            summary = summary[:max_chars].strip() + "…"
+    
+    # Message final
+    final = f"{base}{rating_line} :\n{summary}{suffix}"
+    
+    # Métriques
+    final_len = len(final)
+    final_tokens = final_len // 4
+    print(f"[METRICS-GAME] 📤 Message final: {final_len} chars (~{final_tokens} tokens)")
+    
+    if debug:
+        print(f"[GAME] ✅ Jeu: {name} ({release_year})")
+        print(f"[GAME] Plateformes: {platforms}")
+        if metacritic:
+            print(f"[GAME] Metacritic: {metacritic}/100")
+        if rating:
+            print(f"[GAME] Rating: {rating}/5 ({ratings_count} avis)")
+    
+    return final

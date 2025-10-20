@@ -1,0 +1,97 @@
+{
+  "model_name": "qwen2.5-3b-instruct",
+  "max_concurrent_users_brut": 4,
+  "max_concurrent_users_modere": 7,
+  "max_history_messages": 4,
+  "user_rate_limit": 0.5,
+  "response_timeout": 3.0,
+  "tested_at": "2025-10-19 05:00:25",
+  "test_results_brut": [
+    {
+      "num_users": 3,
+      "max_latency": 1.6040623188018799,
+      "avg_latency": 1.0810241169399686,
+      "success_rate": 1.0,
+      "timeouts": 0
+    },
+    {
+      "num_users": 4,
+      "max_latency": 2.412351608276367,
+      "avg_latency": 1.6556272705396016,
+      "success_rate": 1.0,
+      "timeouts": 0
+    },
+    {
+      "num_users": 5,
+      "max_latency": 3.2091238498687744,
+      "avg_latency": 2.0471359729766845,
+      "success_rate": 1.0,
+      "timeouts": 1
+    },
+    {
+      "num_users": 6,
+      "max_latency": 4.315997838973999,
+      "avg_latency": 2.4854667716556125,
+      "success_rate": 1.0,
+      "timeouts": 8
+    },
+    {
+      "num_users": 12,
+      "max_latency": 7.2104785442352295,
+      "avg_latency": 4.936648918522729,
+      "success_rate": 1.0,
+      "timeouts": 28
+    },
+    {
+      "num_users": 25,
+      "max_latency": 17.101005792617798,
+      "avg_latency": 10.912220808664957,
+      "success_rate": 1.0,
+      "timeouts": 68
+    }
+  ],
+  "test_results_modere": [
+    {
+      "num_users": 6,
+      "max_latency": 1.9572482109069824,
+      "avg_latency": 0.9338069889280531,
+      "success_rate": 1.0,
+      "timeouts": 0
+    },
+    {
+      "num_users": 7,
+      "max_latency": 2.485927104949951,
+      "avg_latency": 1.2370942887805758,
+      "success_rate": 1.0,
+      "timeouts": 0
+    },
+    {
+      "num_users": 8,
+      "max_latency": 3.8880701065063477,
+      "avg_latency": 1.5545040865739186,
+      "success_rate": 1.0,
+      "timeouts": 3
+    },
+    {
+      "num_users": 9,
+      "max_latency": 3.40134859085083,
+      "avg_latency": 1.4569339487287734,
+      "success_rate": 1.0,
+      "timeouts": 2
+    },
+    {
+      "num_users": 12,
+      "max_latency": 4.166929006576538,
+      "avg_latency": 1.812739650408427,
+      "success_rate": 1.0,
+      "timeouts": 9
+    },
+    {
+      "num_users": 25,
+      "max_latency": 8.899131774902344,
+      "avg_latency": 4.043249044418335,
+      "success_rate": 1.0,
+      "timeouts": 46
+    }
+  ]
+}
