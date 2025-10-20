@@ -176,7 +176,7 @@ async def handle_ask_command(message: Message, config: dict, question: str, now)
         
         # Tenter de récupérer les données du jeu via RAWG (avec cache)
         try:
-            from core.commands.api.game_data_fetcher import fetch_game_data
+            from src.core.commands.api.game_data_fetcher import fetch_game_data
             
             game_data = await fetch_game_data(game_entity, config, cache_only=False)
             
