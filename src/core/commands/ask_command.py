@@ -6,6 +6,7 @@ from twitchio import Message  # pyright: ignore[reportPrivateImportUsage]
 from prompts.prompt_loader import make_prompt
 from utils.model_utils import call_model
 from src.utils.cache_manager import get_cached_or_fetch
+from src.core.fallbacks import get_fallback_response
 
 
 async def extract_game_entity(question: str) -> str | None:
@@ -150,8 +151,16 @@ def format_game_answer(game_data: dict, question: str) -> str:
     return response
 
 
-async def handle_ask_command(message: Message, config: dict, question: str, now):  # pylint: disable=unused-argument
-    """Handle the !ask command to answer user questions using AI."""
+async def handle_ask_command(message: Message, config: dict, question: str, now, llm_available: bool = True):  # pylint: disable=unused-argument
+    """Handle the !ask command to answer user questions using AI.
+    
+    Args:
+        message: Message Twitch reçu
+        config: Configuration du bot
+        question: Question de l'utilisateur
+        now: Timestamp actuel
+        llm_available: Si le LLM est disponible (défaut: True pour rétrocompatibilité)
+    """
     user = (message.author.name or "user").lower()
     debug = config["bot"].get("debug", False)
 
@@ -235,6 +244,21 @@ async def handle_ask_command(message: Message, config: dict, question: str, now)
         return
 
     # === FALLBACK 2: Appel au modèle LLM (dernier recours) ===
+    # Vérifier si le LLM est disponible
+    if not llm_available:
+        if debug:
+            print(f"[ASK] 🤖 LLM non disponible → mode fallback")
+        
+        fallback_msg = get_fallback_response("ask")
+        
+        try:
+            await message.channel.send(f"@{user} {fallback_msg}")
+            if debug:
+                print(f"[ASK] ✅ Fallback envoyé: {fallback_msg}")
+        except Exception as e:
+            print(f"[SEND] ❌ Erreur envoi fallback: {e}")
+        return
+    
     if debug:
         print(f"[ASK] 🤖 Appel modèle LLM (dernier recours)...")
     

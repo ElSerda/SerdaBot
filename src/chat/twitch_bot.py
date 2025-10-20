@@ -30,6 +30,7 @@ from src.core.commands.donation_command import handle_donation_command
 from src.core.commands.game_command import handle_game_command
 from src.utils.translator import Translator
 from src.utils.twitch_automod import TwitchAutoMod
+from src.utils.llm_detector import check_llm_status, get_llm_mode
 
 CONFIG = load_config()
 
@@ -99,6 +100,19 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
         
         # Reconnection tracking (TwitchIO 2.x native - Solution optimisée)
         self._booted = False
+        
+        # Détection du LLM au démarrage
+        llm_mode = get_llm_mode(self.config)
+        
+        if llm_mode == "disabled":
+            self.llm_available = False
+            print("🔇 LLM désactivé manuellement (config ou LLM_MODE=disabled)")
+        elif llm_mode == "enabled":
+            self.llm_available = True
+            print("🔊 LLM forcé activé (config ou LLM_MODE=enabled)")
+        else:  # auto
+            self.llm_available, status_msg = check_llm_status(self.config)
+            print(status_msg)
         self._channel_joined_once = False  # Track première connexion vs reconnexion
         self._last_reconnect_announce = 0  # Timestamp pour cooldown anti-spam
 
@@ -618,7 +632,7 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
                 )
                 return
             await self.run_with_cooldown(
-                user, lambda: handle_ask_command(message, self.config, query, now)
+                user, lambda: handle_ask_command(message, self.config, query, now, llm_available=self.llm_available)
             )
 
         elif cleaned.startswith("!cacheadd "):
@@ -641,7 +655,7 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
 
         elif is_mentioned and "chill" in self.enabled:
             await self.run_with_cooldown(
-                user, lambda: handle_chill_command(message, self.config, now)
+                user, lambda: handle_chill_command(message, self.config, now, llm_available=self.llm_available)
             )
 
     async def safe_send(self, channel, content):

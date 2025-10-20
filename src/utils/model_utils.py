@@ -27,13 +27,15 @@ from prompts.prompt_loader import load_system_prompt
 
 # Token and temperature defaults (empirical)
 MAX_TOKENS_ASK = 120
-MAX_TOKENS_CHILL = 80    # Augmenté de 60→80 pour phrases complètes avec nouveau prompt
+MAX_TOKENS_CHILL = 60    # Optimal pour réponses courtes et percutantes (2 phrases max)
 TEMP_ASK = 0.4
 TEMP_CHILL = 0.6         # Réduit de 0.7→0.6 pour moins d'aléatoire
 
 
 def estimate_tokens(text: str) -> int:
-    """Approximate token count (~4 chars per token)."""
+    """Estimate token count using simple heuristic (4 chars ≈ 1 token)."""
+    if not text:
+        return 0
     return max(1, len(text) // 4)
 
 

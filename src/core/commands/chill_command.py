@@ -9,6 +9,7 @@ from twitchio import Message  # pyright: ignore[reportPrivateImportUsage]
 from prompts.prompt_loader import make_prompt
 from utils.model_utils import call_model
 from utils.routing_utils import should_route_to_gameinfo
+from src.core.fallbacks import get_fallback_response
 
 
 async def extract_game_name_from_query(query: str, use_llm_fallback: bool = True) -> str:
@@ -202,8 +203,16 @@ def filter_generic_responses(response: str) -> str:
     return response
 
 
-async def handle_chill_command(message: Message, config: dict, now, conversation_manager=None):  # pylint: disable=unused-argument
-    """Handle chill command with sarcastic AI responses for all users."""
+async def handle_chill_command(message: Message, config: dict, now, conversation_manager=None, llm_available: bool = True):  # pylint: disable=unused-argument
+    """Handle chill command with sarcastic AI responses for all users.
+    
+    Args:
+        message: Message Twitch reçu
+        config: Configuration du bot
+        now: Timestamp actuel
+        conversation_manager: Gestionnaire de conversation (optionnel)
+        llm_available: Si le LLM est disponible (défaut: True pour rétrocompatibilité)
+    """
     botname = config["bot"]["name"].lower()
     debug = config["bot"].get("debug", False)
     user_name = str(message.author.name or "user").lower()
@@ -319,6 +328,21 @@ async def handle_chill_command(message: Message, config: dict, now, conversation
     
     if debug:
         print(f"[ROUTING] ⏭️  Pas de routage détecté ({routing_time:.1f}ms) → LLM")
+    
+    # === Vérifier disponibilité LLM ===
+    if not llm_available:
+        if debug:
+            print(f"[CHILL] 🤖 LLM non disponible → mode fallback")
+        
+        fallback_msg = get_fallback_response("chill")
+        
+        try:
+            await message.channel.send(fallback_msg)
+            if debug:
+                print(f"[CHILL] ✅ Fallback envoyé: {fallback_msg}")
+        except Exception as e:
+            print(f"[SEND] ❌ Erreur envoi fallback: {e}")
+        return
     
     # === LOGIQUE NORMALE (pas de trigger proactif) ===
     # Construire le prompt avec make_prompt

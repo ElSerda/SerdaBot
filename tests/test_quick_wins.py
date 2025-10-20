@@ -96,11 +96,11 @@ class TestPromptConfiguration:
         assert "230 caractères" in SYSTEM_ASK_FINAL, "Prompt ASK devrait mentionner '230 caractères'"
     
     def test_system_chill_prompt(self):
-        """Prompt CHILL doit mentionner minimum 10 caractères"""
+        """Prompt CHILL doit mentionner les contraintes de longueur"""
         from src.prompts.prompt_loader import SYSTEM_CHILL_FINAL
         
-        assert "2-6 mots" in SYSTEM_CHILL_FINAL, "Prompt CHILL devrait mentionner '2-6 mots'"
-        assert "minimum 10 caractères" in SYSTEM_CHILL_FINAL, "Prompt CHILL devrait mentionner 'minimum 10 caractères'"
+        assert "Maximum 2 phrases" in SYSTEM_CHILL_FINAL, "Prompt CHILL devrait mentionner 'Maximum 2 phrases'"
+        assert "courtes et percutantes" in SYSTEM_CHILL_FINAL, "Prompt CHILL devrait mentionner 'courtes et percutantes'"
 
 
 class TestCacheManagerFallback:
