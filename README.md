@@ -16,16 +16,19 @@ SerdaBot is a lightweight, multilingual Twitch chat assistant powered by Qwen 2.
 
 | Command | Description |
 |--------|-------------|
-| `!ask <question>` | **NEW:** Smart routing system - Game questions use RAWG data (0% hallucinations), general questions use LLM. 20,000x faster for game facts. |
+| `!ask <question>` | **NEW:** Smart routing system - Game questions use RAWG data (0% hallucinations), general questions use LLM. 20,000x faster for game facts. **Works without LLM** (fallback mode). |
 | `!game <title>` | Search for a video game and get detailed info: developers, publishers, platforms, ratings (via RAWG API with cache). |
 | `!trad <message>` | Translate a message into the stream's language (default: French). |
-| Mention bot name | Trigger a casual/fun response with geek humor (`!chill` behavior). |
+| Mention bot name | Trigger a casual/fun response with geek humor (`!chill` behavior). **Works without LLM** (fallback mode). |
+
+**🤖 LLM Optional** : SerdaBot works perfectly with or without a local LLM. See [LLM Fallback](docs/LLM_FALLBACK.md) for details.
 
 ---
 
 ## 🧠 Powered by
 
-- **Qwen 2.5-3B-Instruct-Q4_K_M** (local via LM Studio) - Upgraded from 1.5B for better quality
+- **Qwen 2.5-3B-Instruct-Q4_K_M** (local via LM Studio) - Upgraded from 1.5B for better quality — **OPTIONAL**
+- **Automatic fallback** - Bot works perfectly without LLM (pre-defined responses)
 - **RAWG API** - Primary source for game data (100% factual, zero hallucinations)
 - **Intelligent routing** - RAWG for game facts, Wikipedia for context, LLM for general questions
 - Optimized prompts (SYSTEM_CHILL_FINAL: geek humor, anti-hallucination rules)
@@ -107,6 +110,23 @@ pip install -r requirements.txt
 
 **Philosophie :** Séparation stricte code public (Git) ↔ données personnelles (hors Git).  
 Aucun risque de leak de tokens, 100% fork-friendly. 🔒
+
+---
+
+## 🤖 LLM Optional Mode
+
+**SerdaBot works with or without a local LLM!**
+
+- ✅ **With LLM** (LM Studio): Full AI-powered responses
+- ✅ **Without LLM**: Automatic fallback to pre-defined fun responses
+- ✅ **CI/CD Ready**: Tests pass without requiring GPU
+- ✅ **Fork-Friendly**: Clone → run → works immediately
+
+**Detection**: Automatic at startup (checks `http://localhost:1234/v1/models`)  
+**Fallback**: Randomized responses keeping the bot's personality  
+**Override**: `export LLM_MODE=disabled` to force fallback mode
+
+See [docs/LLM_FALLBACK.md](docs/LLM_FALLBACK.md) for full documentation.
 
 ## ❤️ Credit
 

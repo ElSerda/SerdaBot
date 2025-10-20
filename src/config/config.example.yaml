@@ -12,6 +12,14 @@ bot:
   language: "fr"                            # Langue par défaut ("en" ou "fr")
   name: "your_bot_name"                     # Nom du bot Twitch (ex: my_awesome_bot)
   channel: "your_channel_name"              # Nom du channel Twitch (sans @)
+  
+  # === LLM Configuration (OPTIONAL) ===
+  # Le bot fonctionne parfaitement avec ou sans LLM local
+  # Si LM Studio n'est pas disponible → mode fallback automatique
+  llm:
+    enabled: auto                           # auto (détection automatique) | true (force) | false (désactive)
+    fallback_mode: fun                      # fun (répliques humoristiques) | silent (neutre) | minimal (emoji)
+  
   model_path: "src/model"                   # Chemin du dossier du modèle local
   model_file: "your-model.gguf"             # Nom du fichier GGUF du modèle
   model_type: "openai"                      # Type de modèle ("mistral", "llama", "openai", etc.)
