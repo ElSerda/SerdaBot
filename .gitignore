@@ -1,10 +1,12 @@
 # ===== SERDABOT GITIGNORE =====
 
 # === SECRETS & CONFIG ===
+# Config avec tokens/clés réelles (jamais commité)
 config.yaml
 src/config/config.yaml
 *.env
-.env*
+.env
+.env.*
 
 # === TOKENS & SESSIONS ===
 .tio.tokens.json

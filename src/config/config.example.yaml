@@ -1,0 +1,58 @@
+# ===== SERDABOT CONFIGURATION EXAMPLE =====
+# 
+# 📌 INSTRUCTIONS :
+# 1. Créer le dossier local : mkdir -p ../SerdaBot-local/config
+# 2. Copier ce fichier : cp src/config/config.example.yaml ../SerdaBot-local/config/config.yaml
+# 3. Remplir les vraies valeurs (tokens, clés API, etc.)
+# 4. Lancer le bot : ./start_bot.sh (détecte automatiquement la config locale)
+#
+# ⚠️  NE JAMAIS COMMITER config.yaml avec de vraies clés !
+
+bot:
+  language: "fr"                            # Langue par défaut ("en" ou "fr")
+  name: "your_bot_name"                     # Nom du bot Twitch (ex: my_awesome_bot)
+  channel: "your_channel_name"              # Nom du channel Twitch (sans @)
+  model_path: "src/model"                   # Chemin du dossier du modèle local
+  model_file: "your-model.gguf"             # Nom du fichier GGUF du modèle
+  model_type: "openai"                      # Type de modèle ("mistral", "llama", "openai", etc.)
+  openai_model: "gpt-3.5-turbo"             # Modèle OpenAI à utiliser
+  use_gpu: true                             # Activer l'accélération GPU (true/false)
+  gpu_layers: 50                            # Nombre de layers GPU
+  cooldown: 10                              # Cooldown entre réponses (en secondes)
+  model_endpoint: http://127.0.0.1:1234/v1/chat/completions  # Endpoint LM Studio
+  api_url: http://127.0.0.1:1234/v1/chat/completions         # API LM Studio
+  model_name: "qwen2.5-3b-instruct"         # Nom du modèle (Qwen2.5-3B-Instruct-Q4_K_M recommandé)
+  model_timeout: 10                         # Timeout requêtes modèle (secondes)
+  max_tokens_ask: 120                       # Max tokens mode ASK (réponses détaillées)
+  max_tokens_chill: 60                      # Max tokens mode CHILL (conversations)
+  temperature_ask: 0.4                      # Temperature ASK (factuel)
+  temperature_chill: 0.7                    # Temperature CHILL (créatif)
+  log_ia: true                              # Activer logs IA (debug)
+  debug: true                               # Verbose output (debug)
+  translation: libretranslate               # Service de traduction ("model" ou "libretranslate")
+  reset_cache_on_boot: false                # Reset cache au démarrage (default: false)
+  kofi_url: "https://ko-fi.com/your_username"       # URL Ko-fi pour donations
+  donation_message: "☕ Merci pour le support ! Tu peux soutenir [YourName] ici : {kofi_url} 💜"
+  connect_message: "C'est ici les précoces ? ☕"    # Message de connexion (vide = désactivé)
+
+  enabled_commands:
+    - game
+    - chill
+    - ask
+    - trad
+
+openai:
+  api_key: "sk-proj-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"  # Clé API OpenAI (depuis platform.openai.com)
+
+twitch:
+  token: "oauth:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"   # Token OAuth Twitch (depuis twitchtokengenerator.com)
+  client_id: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"     # Client ID Twitch (dev.twitch.tv)
+  client_secret: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" # Client Secret Twitch
+  bot_id: "123456789"                                # User ID du bot Twitch
+
+igdb:
+  client_id: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"     # Client ID IGDB (dev.twitch.tv)
+  client_secret: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" # Client Secret IGDB
+
+rawg:
+  api_key: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"       # Clé API RAWG (rawg.io/apidocs)
