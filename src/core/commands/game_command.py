@@ -6,6 +6,7 @@ Architecture propre avec séparation des responsabilités.
 """
 
 import json
+import re
 
 from twitchio import Message  # pyright: ignore[reportPrivateImportUsage]
 
@@ -56,52 +57,104 @@ async def handle_game_command(message: Message, config: dict, game_name: str, no
             print(f"[GAME] ⚠️ Requête vide ignorée de @{user}")
         return
 
-    # 🔍 VÉRIFICATION DU CACHE
-    cache_key = get_cache_key("gameinfo", game_name)
-    cached_message = GAME_CACHE.get(cache_key)
+    # 🔍 VÉRIFICATION DU CACHE (données traduites + compteur de hits)
+    cache_key = get_cache_key("gamedata", game_name)
+    cached_entry = GAME_CACHE.get(cache_key)
     
-    if cached_message:
+    hit_count = 1  # Première recherche par défaut
+    
+    if cached_entry:
         if debug:
             print(f"[GAME] ⚡ Cache HIT pour '{game_name}'")
-        await message.channel.send(cached_message)
-        return
-
-    await message.channel.send("🎮 Recherche du jeu...")
-    
-    try:
-        # 🔥 RÉCUPÉRATION via le nouveau module API (RAWG prioritaire)
-        data = await fetch_game_data(game_name, config)
-
-        if not data:
-            await message.channel.send(f"❌ Jeu introuvable : {game_name}")
-            if debug:
-                print(f"[GAME] ❌ Aucun résultat pour '{game_name}'")
-            return
-
-        if debug:
-            debug_data = {k: v for k, v in data.items() if k not in ["summary", "background_image"]}
-            print(
-                "[GAME] 🔎 Données brutes API (hors summary) :\n"
-                + json.dumps(debug_data, indent=2, ensure_ascii=False)
-            )
-
-        # 📊 FORMATAGE du message
-        message_text = await _format_game_message(data, user, config, debug, cooldown)
+        data = cached_entry["data"]
+        hit_count = cached_entry.get("hit_count", 1) + 1
         
-        # � MISE EN CACHE avec TTL adapté
+        # Mettre à jour le compteur dans le cache
+        cached_entry["hit_count"] = hit_count
         release_year = data.get("release_year", "9999")
         ttl = get_ttl_for_game(release_year)
-        GAME_CACHE.set(cache_key, message_text, ttl=ttl)
+        GAME_CACHE.set(cache_key, cached_entry, ttl=ttl)
         
         if debug:
-            print(f"[GAME] 💾 Mis en cache '{game_name}' (TTL: {ttl}s)")
+            print(f"[GAME] 📊 Popularité: {hit_count}× demandé")
+    else:
+        await message.channel.send("🎮 Recherche du jeu...")
         
-        # �📤 ENVOI
-        await message.channel.send(message_text)
+        try:
+            # 🔥 RÉCUPÉRATION via le nouveau module API (RAWG prioritaire)
+            data = await fetch_game_data(game_name, config)
 
+            if not data:
+                await message.channel.send(f"❌ Jeu introuvable : {game_name}")
+                if debug:
+                    print(f"[GAME] ❌ Aucun résultat pour '{game_name}'")
+                return
+
+            if debug:
+                debug_data = {k: v for k, v in data.items() if k not in ["summary", "background_image"]}
+                print(
+                    "[GAME] 🔎 Données brutes API (hors summary) :\n"
+                    + json.dumps(debug_data, indent=2, ensure_ascii=False)
+                )
+
+            # 🌐 TRADUCTION du summary AVANT mise en cache
+            summary = data.get("summary", "")
+            if summary and any(word in summary.lower() for word in ['the', 'and', 'you', 'with', 'for', 'this', 'that']):
+                translator = Translator()
+                
+                input_len = len(summary)
+                input_tokens = input_len // 4
+                print(f"[METRICS-GAME] 🌐 Traduction EN→FR: {input_len} chars (~{input_tokens} tokens)")
+
+                try:
+                    result = translator.translate(summary, source='en', target='fr')
+                    if result and not result.startswith('⚠️'):
+                        data["summary"] = clean_translation(result)
+                        output_len = len(data["summary"])
+                        output_tokens = output_len // 4
+                        print(f"[METRICS-GAME] ✅ Traduit: {output_len} chars (~{output_tokens} tokens)")
+                    else:
+                        print("[METRICS-GAME] ⚠️ Traduction échouée, texte original conservé")
+                except Exception as e:
+                    if debug:
+                        print(f"[GAME] ⚠️ Translation error: {e}")
+
+            # 💾 MISE EN CACHE des données TRADUITES + compteur
+            cache_entry = {
+                "data": data,
+                "hit_count": 1
+            }
+            release_year = data.get("release_year", "9999")
+            ttl = get_ttl_for_game(release_year)
+            GAME_CACHE.set(cache_key, cache_entry, ttl=ttl)
+            
+            if debug:
+                print(f"[GAME] 💾 Mis en cache '{game_name}' (TTL: {ttl}s)")
+        
+        except (RuntimeError, ValueError, KeyError, TypeError) as e:
+            await message.channel.send(f"@{user} ⚠️ Erreur lors du traitement.")
+            print(f"❌ [GAME] Exception : {e}")
+            return
+    
+    # 📊 FORMATAGE du message (toujours refait pour avoir le bon @user)
+    try:
+        result = await _format_game_message(data, user, config, debug, cooldown, hit_count)
+        
+        if debug:
+            print(f"[GAME] 📝 Message formaté: {result['main'][:100]}...")
+            print(f"[GAME] 📏 Longueur: {len(result['main'])} chars")
+            print(f"[GAME] 📺 Channel: {message.channel.name}")
+            print(f"[GAME] 🔍 Message complet:\n{result['main']}")
+        
+        # 📤 ENVOI (message principal seulement, pas de description)
+        await message.channel.send(result["main"])
+        
+        if debug:
+            print(f"[GAME] ✅ Message envoyé sur Twitch (channel: {message.channel.name})")
+    
     except (RuntimeError, ValueError, KeyError, TypeError) as e:
-        await message.channel.send(f"@{user} ⚠️ Erreur lors du traitement.")
-        print(f"❌ [GAME] Exception : {e}")
+        await message.channel.send(f"@{user} ⚠️ Erreur lors du formatage.")
+        print(f"❌ [GAME] Exception formatage : {e}")
 
 
 async def _format_game_message(
@@ -109,33 +162,33 @@ async def _format_game_message(
     user: str, 
     config: dict, 
     debug: bool,
-    cooldown: int
-) -> str:
+    cooldown: int,
+    hit_count: int = 1
+) -> dict:
     """
     Formate les données du jeu en message Twitch optimisé.
     
+    IMPORTANT: Le summary est déjà traduit dans data["summary"] avant l'appel !
+    
     Gère :
-    - Traduction EN→FR si nécessaire
     - Formatage des notes/ratings (Metacritic, RAWG)
     - Compression des plateformes
     - Troncature intelligente de la description
-    - Construction du message final (<500 chars)
+    - Construction du message principal
     
     Args:
-        data: Données normalisées du jeu (depuis RAWG ou IGDB)
+        data: Données normalisées ET TRADUITES du jeu (depuis RAWG ou IGDB)
         user: Nom de l'utilisateur Twitch
-        config: Configuration du bot
+        config: Configuration du bot (unused mais gardé pour compatibilité)
         debug: Mode debug activé
-        cooldown: Durée du cooldown à afficher
+        cooldown: Cooldown en secondes
     
     Returns:
-        Message formaté prêt à envoyer sur Twitch
+        Dict avec {"main": str, "description": str | None}
     """
-    translator = Translator()
-    
-    # Extraction des données
+    # Extraction des données (summary est déjà traduit !)
     name = data.get("name", "Inconnu")
-    summary_raw = data.get("summary", "")
+    summary = data.get("summary", "")  # Déjà traduit et nettoyé
     slug = data.get("slug", "")
     release_year = data.get("release_year", "?")
     
@@ -147,34 +200,6 @@ async def _format_game_message(
     # Developers et Publishers (seulement si RAWG)
     developers = data.get("developers", [])
     publishers = data.get("publishers", [])
-    
-    # URL IGDB (pour compatibilité)
-    igdb_url = f"https://www.igdb.com/games/{sanitize_slug(slug or name)}"
-    
-    # 🌐 TRADUCTION du résumé si nécessaire
-    summary = summary_raw
-    try:
-        # Détection simple: si mots anglais présents
-        if any(word in summary.lower() for word in ['the', 'and', 'you', 'with', 'for', 'this', 'that']):
-            input_len = len(summary)
-            input_tokens = input_len // 4
-            print(f"[METRICS-GAME] 🌐 Traduction EN→FR: {input_len} chars (~{input_tokens} tokens)")
-
-            result = translator.translate(summary, source='en', target='fr')
-            if result and not result.startswith('⚠️'):
-                summary = result
-                output_len = len(summary)
-                output_tokens = output_len // 4
-                print(f"[METRICS-GAME] ✅ Traduit: {output_len} chars (~{output_tokens} tokens)")
-            else:
-                print("[METRICS-GAME] ⚠️ Traduction échouée, texte original conservé")
-                
-    except (RuntimeError, ValueError, KeyError) as e:
-        if debug:
-            print(f"[GAME] ⚠️ Translation error: {e}")
-    
-    # Nettoyage des erreurs de traduction courantes
-    summary = clean_translation(summary)
     
     # 📝 CONSTRUCTION DU MESSAGE
     # Ligne 1: @user 🎮 NomDuJeu (année), plateformes
@@ -210,34 +235,46 @@ async def _format_game_message(
                 rating_parts[-1] += f" ({count_str} avis)"
         
         rating_line = " | ".join(rating_parts)
-        if rating_line:
-            rating_line = "\n" + rating_line
     
-    # Suffix avec lien et cooldown
-    suffix = f" ({igdb_url}) ({cooldown}s)"
+    # Construire le message principal (ligne 1 + ratings sur même ligne)
+    message_main = base
+    if rating_line:
+        message_main += f" | {rating_line}"
     
-    # Calcul de l'espace disponible pour la description
-    max_chars = 500 - len(base) - len(rating_line) - len(suffix) - 5  # Marge de sécurité
+    # Suffix avec cooldown et popularité
+    if hit_count > 1:
+        message_main += f" ({hit_count}× demandé, {cooldown}s)"
+    else:
+        message_main += f" ({cooldown}s)"
     
-    # Troncature intelligente de la description
-    if len(summary) > max_chars:
-        cut_dot = summary[:max_chars].rfind(". ")
-        cut_comma = summary[:max_chars].rfind(", ")
+    # Nettoyer le summary des artefacts de traduction
+    # Supprimer les marqueurs de section (###, ##, etc.)
+    summary = re.sub(r'#{1,6}\s*\w+', '', summary)
+    summary = summary.strip()
+    
+    # Message de description (séparé, max 400 chars)
+    max_summary_chars = 400
+    if len(summary) > max_summary_chars:
+        cut_dot = summary[:max_summary_chars].rfind(". ")
+        cut_comma = summary[:max_summary_chars].rfind(", ")
         
         if cut_dot > 100:
             summary = summary[:cut_dot + 1].strip()
         elif cut_comma > 100:
             summary = summary[:cut_comma + 1].strip()
         else:
-            summary = summary[:max_chars].strip() + "…"
+            summary = summary[:max_summary_chars].strip() + "…"
     
-    # Message final
-    final = f"{base}{rating_line} :\n{summary}{suffix}"
+    # Retourner dict avec 2 messages au lieu d'un seul
+    result = {
+        "main": message_main,
+        "description": f"📝 {summary}" if summary else None
+    }
     
     # Métriques
-    final_len = len(final)
-    final_tokens = final_len // 4
-    print(f"[METRICS-GAME] 📤 Message final: {final_len} chars (~{final_tokens} tokens)")
+    total_len = len(message_main) + (len(summary) if summary else 0)
+    total_tokens = total_len // 4
+    print(f"[METRICS-GAME] 📤 Message total: {total_len} chars (~{total_tokens} tokens)")
     
     if debug:
         print(f"[GAME] ✅ Jeu: {name} ({release_year})")
@@ -247,4 +284,4 @@ async def _format_game_message(
         if rating:
             print(f"[GAME] Rating: {rating}/5 ({ratings_count} avis)")
     
-    return final
+    return result

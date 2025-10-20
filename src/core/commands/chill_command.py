@@ -250,17 +250,63 @@ async def handle_chill_command(message: Message, config: dict, now, conversation
     game = config.get("stream", {}).get("game")
     title = config.get("stream", {}).get("title")
 
-    # === ROUTAGE PRÉCOCE (jeu + date) ===
-    # Si question de date/sortie détectée → router vers gameinfo directement
+    # === ROUTAGE INTELLIGENT: RAWG-FIRST ===
+    # Détecter si le message parle d'un jeu vidéo → utiliser RAWG au lieu du LLM
     routing_start = time.time()
-    game_name = await should_route_to_gameinfo(content)
+    
+    # Import de la fonction extract_game_entity depuis ask_command
+    from src.core.commands.ask_command import extract_game_entity, format_game_answer
+    
+    game_entity = await extract_game_entity(content)
     routing_time = (time.time() - routing_start) * 1000  # ms
+    
+    if game_entity:
+        if debug:
+            print(f"[ROUTING] 🎮 Entité jeu détectée: '{game_entity}'")
+            print(f"[ROUTING] 🧠 Décision: RAWG (jeu détecté)")
+        
+        # Tenter de récupérer les données du jeu via RAWG (avec cache)
+        try:
+            from src.core.commands.api.game_data_fetcher import fetch_game_data
+            
+            rawg_start = time.time()
+            game_data = await fetch_game_data(game_entity, config, cache_only=False)
+            rawg_time = (time.time() - rawg_start) * 1000  # ms
+            
+            if game_data:
+                if debug:
+                    print(f"[ROUTING] ✅ Données RAWG trouvées: {game_data.get('name')} ({rawg_time:.0f}ms)")
+                
+                # Formater la réponse basée sur les données RAWG
+                factual_response = format_game_answer(game_data, content)
+                
+                # Sécurité Twitch
+                if len(factual_response) > 480:
+                    factual_response = factual_response[:477] + "…"
+                
+                try:
+                    await message.channel.send(factual_response)
+                    if debug:
+                        print(f"[ROUTING] ✅ Réponse RAWG envoyée (0% LLM, 100% factuel)")
+                    return
+                except Exception as e:
+                    print(f"[ROUTING] ❌ Erreur envoi: {e}")
+                    return
+            else:
+                if debug:
+                    print(f"[ROUTING] ⚠️ Jeu '{game_entity}' non trouvé dans RAWG, fallback LLM")
+        except Exception as e:
+            if debug:
+                print(f"[ROUTING] ⚠️ Erreur fetch_game_data: {e}, fallback LLM")
+    
+    # Si pas de jeu détecté, vérifier routing date/sortie (ancien système)
+    game_name = await should_route_to_gameinfo(content)
     
     if game_name:
         if debug:
-            print(f"[ROUTING] 🎯 Détection: '{content[:60]}' → game='{game_name}' ({routing_time:.1f}ms)")
+            print(f"[ROUTING] 🎯 Détection date/sortie: '{content[:60]}' → game='{game_name}' ({routing_time:.1f}ms)")
         
-        # Appeler handle_game_command directement avec tous les args nécessaires
+        # Appeler handle_game_command directement
         from core.commands.game_command import handle_game_command
         
         igdb_start = time.time()
@@ -270,9 +316,9 @@ async def handle_chill_command(message: Message, config: dict, now, conversation
         if debug:
             print(f"[ROUTING] ✅ IGDB terminé: @{user_name} | game={game_name} | latence={igdb_time:.0f}ms")
         return
-    else:
-        if debug:
-            print(f"[ROUTING] ⏭️  Pas de routage détecté ({routing_time:.1f}ms) → LLM")
+    
+    if debug:
+        print(f"[ROUTING] ⏭️  Pas de routage détecté ({routing_time:.1f}ms) → LLM")
     
     # === LOGIQUE NORMALE (pas de trigger proactif) ===
     # Construire le prompt avec make_prompt
