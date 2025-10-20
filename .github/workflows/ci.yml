@@ -23,7 +23,7 @@ jobs:
         cache: 'pip'  # Cache automatique pip
 
     - name: Cache pip packages
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt', '**/dev-requirements.txt') }}
@@ -37,7 +37,7 @@ jobs:
         pip install -r dev-requirements.txt
 
     - name: Cache pytest results
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: .pytest_cache
         key: ${{ runner.os }}-pytest-${{ hashFiles('tests/**') }}
