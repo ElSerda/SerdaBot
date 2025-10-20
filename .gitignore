@@ -64,6 +64,7 @@ CHECKUP_*.md
 RELEASE_*.md
 PROJECT_STRUCTURE.md
 TODO.md
+TODO-DEV/
 
 # === PYTEST & COVERAGE ===
 .coverage
