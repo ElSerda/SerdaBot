@@ -12,23 +12,8 @@ from twitchio import Message  # pyright: ignore[reportPrivateImportUsage]
 
 from core.cache import GAME_CACHE, get_cache_key, get_ttl_for_game
 from utils.game_utils import compress_platforms, normalize_platforms, sanitize_slug
-from utils.translator import Translator
 
 from .api import fetch_game_data  # Nouveau module API centralisé
-
-
-def clean_translation(text: str) -> str:
-    """Clean common translation mistakes in French game descriptions."""
-    replacements = {
-        "plateforme super étanche": "jeu de plateforme",
-        "secrets dérisoires": "secrets cachés",
-        "rassemble le mystère": "découvre les mystères",
-        "défis réalisés à la main": "niveaux faits main",
-        "ouvert-monde": "monde ouvert",
-    }
-    for wrong, right in replacements.items():
-        text = text.replace(wrong, right)
-    return text
 
 
 async def handle_game_command(message: Message, config: dict, game_name: str, now):  # pylint: disable=unused-argument
@@ -85,7 +70,7 @@ async def handle_game_command(message: Message, config: dict, game_name: str, no
             data = await fetch_game_data(game_name, config)
 
             if not data:
-                await message.channel.send(f"❌ Jeu introuvable : {game_name}")
+                await message.channel.send(f"@{user} 🤔 Aucun jeu trouvé pour '{game_name}'. T'es sûr du nom ?")
                 if debug:
                     print(f"[GAME] ❌ Aucun résultat pour '{game_name}'")
                 return
@@ -97,29 +82,7 @@ async def handle_game_command(message: Message, config: dict, game_name: str, no
                     + json.dumps(debug_data, indent=2, ensure_ascii=False)
                 )
 
-            # 🌐 TRADUCTION du summary AVANT mise en cache
-            summary = data.get("summary", "")
-            if summary and any(word in summary.lower() for word in ['the', 'and', 'you', 'with', 'for', 'this', 'that']):
-                translator = Translator()
-                
-                input_len = len(summary)
-                input_tokens = input_len // 4
-                print(f"[METRICS-GAME] 🌐 Traduction EN→FR: {input_len} chars (~{input_tokens} tokens)")
-
-                try:
-                    result = translator.translate(summary, source='en', target='fr')
-                    if result and not result.startswith('⚠️'):
-                        data["summary"] = clean_translation(result)
-                        output_len = len(data["summary"])
-                        output_tokens = output_len // 4
-                        print(f"[METRICS-GAME] ✅ Traduit: {output_len} chars (~{output_tokens} tokens)")
-                    else:
-                        print("[METRICS-GAME] ⚠️ Traduction échouée, texte original conservé")
-                except Exception as e:
-                    if debug:
-                        print(f"[GAME] ⚠️ Translation error: {e}")
-
-            # 💾 MISE EN CACHE des données TRADUITES + compteur
+            # 💾 MISE EN CACHE des données + compteur (pas de traduction summary)
             cache_entry = {
                 "data": data,
                 "hit_count": 1
@@ -132,8 +95,8 @@ async def handle_game_command(message: Message, config: dict, game_name: str, no
                 print(f"[GAME] 💾 Mis en cache '{game_name}' (TTL: {ttl}s)")
         
         except (RuntimeError, ValueError, KeyError, TypeError) as e:
-            await message.channel.send(f"@{user} ⚠️ Erreur lors du traitement.")
-            print(f"❌ [GAME] Exception : {e}")
+            await message.channel.send(f"@{user} 🔌 Désolé, j'ai pas accès à ma base de données jeux pour le moment ! 🎮💤")
+            print(f"❌ [GAME] Exception API : {e}")
             return
     
     # 📊 FORMATAGE du message (toujours refait pour avoir le bon @user)
@@ -153,7 +116,7 @@ async def handle_game_command(message: Message, config: dict, game_name: str, no
             print(f"[GAME] ✅ Message envoyé sur Twitch (channel: {message.channel.name})")
     
     except (RuntimeError, ValueError, KeyError, TypeError) as e:
-        await message.channel.send(f"@{user} ⚠️ Erreur lors du formatage.")
+        await message.channel.send(f"@{user} 🔌 Ma connexion aux infos jeux marche pas. Désolé ! (erreur formatage)")
         print(f"❌ [GAME] Exception formatage : {e}")
 
 

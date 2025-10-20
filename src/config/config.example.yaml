@@ -10,7 +10,7 @@
 
 bot:
   language: "fr"                            # Langue par défaut ("en" ou "fr")
-  name: "your_bot_name"                     # Nom du bot Twitch (ex: my_awesome_bot)
+  name: "your_bot_name"                     # Nom d'utilisateur Twitch du bot (login, pas display name)
   channel: "your_channel_name"              # Nom du channel Twitch (sans @)
   
   # === LLM Configuration (OPTIONAL) ===
@@ -41,7 +41,7 @@ bot:
   reset_cache_on_boot: false                # Reset cache au démarrage (default: false)
   kofi_url: "https://ko-fi.com/your_username"       # URL Ko-fi pour donations
   donation_message: "☕ Merci pour le support ! Tu peux soutenir [YourName] ici : {kofi_url} 💜"
-  connect_message: "C'est ici les précoces ? ☕"    # Message de connexion (vide = désactivé)
+  connect_message: "Coucou ☕"                       # Message de connexion Twitch (vide = désactivé)
 
   enabled_commands:
     - game
@@ -64,3 +64,30 @@ igdb:
 
 rawg:
   api_key: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"       # Clé API RAWG (rawg.io/apidocs)
+
+# ===== Rate Limiting & Performance =====
+rate_limiting:
+  # User cooldowns (anti-spam)
+  user_cooldown: 10                    # Secondes entre messages par user
+  max_requests_per_user_hour: 20       # Limite anti-spam par user/heure
+  max_concurrent_users: 4              # Max users simultanés
+  
+  # Cleanup (optimisation mémoire)
+  cleanup_interval: 600                # Nettoyage toutes les 10min
+  max_idle_time: 3600                  # Supprimer users inactifs > 1h
+  
+  # LLM endpoint failure handling (retry intelligent)
+  llm_retry_delay: 5                   # Premier retry après 5s d'échec
+  llm_backoff_multiplier: 2            # Backoff exponentiel (5s → 10s → 20s)
+  llm_backoff_max: 300                 # Backoff max 5min entre retries
+  llm_reset_on_success: true           # Reset compteur échecs si succès
+  
+  # Health check (heartbeat - optionnel en prod 24/7)
+  health_check_enabled: false          # Activer pour monitoring proactif
+  health_check_interval: 30            # Secondes entre pings santé endpoint
+  health_check_timeout: 2              # Timeout ping santé
+  health_check_failures_threshold: 3   # Échecs consécutifs avant marquer "down"
+  
+  # External APIs rate limits
+  wikipedia_rate_limit: 1.0            # 1 requête/sec (Wikipedia)
+  igdb_rate_limit: 4.0                 # 4 requêtes/sec (Twitch API)

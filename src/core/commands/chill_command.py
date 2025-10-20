@@ -2,97 +2,12 @@
 
 import re
 import time
-from datetime import datetime
 
 from twitchio import Message  # pyright: ignore[reportPrivateImportUsage]
 
 from prompts.prompt_loader import make_prompt
 from utils.model_utils import call_model
-from utils.routing_utils import should_route_to_gameinfo
 from src.core.fallbacks import get_fallback_response
-
-
-async def extract_game_name_from_query(query: str, use_llm_fallback: bool = True) -> str:
-    """Extrait le nom d'un jeu d'une question utilisateur.
-    
-    Stratégie modulaire (pas de liste hardcodée):
-    1. Patterns regex génériques pour extraire noms propres/titres
-    2. Si échec ET use_llm_fallback=True: demander au modèle LLM
-    
-    Exemples:
-    - "quel est le dernier jeu pokemon ?" → "pokemon"
-    - "c'est quoi Elden Ring ?" → "elden ring"
-    - "Baldur's Gate 3 est sorti quand ?" → "baldur's gate 3"
-    """
-    query_lower = query.lower()
-    original_query = query  # Garde la casse originale pour noms propres
-    
-    # === 1. Extraction par patterns génériques (sans liste hardcodée) ===
-    
-    # Pattern 1: "jeu X" ou "nouveau X" ou "dernier X"
-    pattern_1 = r"(?:jeu|nouveau|dernier|récent)\s+([A-Z][a-zA-Z0-9\s:''\-]+?)(?:\s+\?|\s+est|\s+sorti|$)"
-    match = re.search(pattern_1, original_query)
-    if match:
-        extracted = match.group(1).strip()
-        # Nettoyer (enlever mots communs de fin)
-        extracted = re.sub(r'\s+(le|la|les|de|du|des)$', '', extracted, flags=re.IGNORECASE)
-        if len(extracted) > 2:  # Au moins 3 chars
-            return extracted.lower()
-    
-    # Pattern 2: Nom propre suivi de verbe (ex: "Starfield est sorti")
-    pattern_2 = r"([A-Z][a-zA-Z0-9\s:''\-]+?)\s+(?:est|sorti|sortit|dispo|disponible)"
-    match = re.search(pattern_2, original_query)
-    if match:
-        extracted = match.group(1).strip()
-        if len(extracted) > 2:
-            return extracted.lower()
-    
-    # Pattern 3: Entre guillemets ou après "c'est quoi"
-    pattern_3 = r"(?:c'est quoi|quoi)\s+(?:le\s+)?([A-Z][a-zA-Z0-9\s:''\-]+?)(?:\s+\?|$)"
-    match = re.search(pattern_3, original_query)
-    if match:
-        extracted = match.group(1).strip()
-        if len(extracted) > 2:
-            return extracted.lower()
-    
-    # Pattern 4: Mots après "jeu" ou "game" (même en minuscules)
-    pattern_4 = r'(?:jeu|game)\s+([a-z][a-z0-9\s]+?)(?:\s+\?|\s+est|\s+sorti|$)'
-    match = re.search(pattern_4, query_lower)
-    if match:
-        extracted = match.group(1).strip()
-        # Enlever mots de liaison
-        extracted = re.sub(r'\s+(le|la|les|de|du|des|en|sur|pour)$', '', extracted)
-        if len(extracted) > 2:
-            return extracted
-    
-    # === 2. Fallback LLM (si activé) ===
-    if use_llm_fallback:
-        try:
-            import httpx
-            
-            extraction_prompt = f"""Extrait le nom du jeu vidéo ou de la franchise. Réponds UNIQUEMENT avec le nom, ou AUCUN.
-Exemples: 'quel est le dernier jeu pokemon ?' → 'Pokemon' | 'c est quoi Elden Ring ?' → 'Elden Ring' | 'salut' → 'AUCUN'
-Question: {query}"""
-            
-            payload = {
-                "model": "qwen2.5-3b-instruct",
-                "messages": [{"role": "user", "content": extraction_prompt}],
-                "temperature": 0.1,
-                "max_tokens": 20,
-            }
-            
-            response = httpx.post("http://127.0.0.1:1234/v1/chat/completions", json=payload, timeout=5)
-            
-            if response.status_code == 200:
-                result = response.json()
-                extracted = result["choices"][0]["message"]["content"].strip()
-                
-                if extracted and extracted.upper() != "AUCUN":
-                    return extracted.lower()
-        except Exception:
-            pass  # Si LLM échoue, on continue sans
-    
-    return ""
 
 
 def detect_vague_game_response(user_msg: str, response: str) -> str | None:
@@ -259,75 +174,11 @@ async def handle_chill_command(message: Message, config: dict, now, conversation
     game = config.get("stream", {}).get("game")
     title = config.get("stream", {}).get("title")
 
-    # === ROUTAGE INTELLIGENT: RAWG-FIRST ===
-    # Détecter si le message parle d'un jeu vidéo → utiliser RAWG au lieu du LLM
-    routing_start = time.time()
-    
-    # Import de la fonction extract_game_entity depuis ask_command
-    from src.core.commands.ask_command import extract_game_entity, format_game_answer
-    
-    game_entity = await extract_game_entity(content)
-    routing_time = (time.time() - routing_start) * 1000  # ms
-    
-    if game_entity:
-        if debug:
-            print(f"[ROUTING] 🎮 Entité jeu détectée: '{game_entity}'")
-            print(f"[ROUTING] 🧠 Décision: RAWG (jeu détecté)")
-        
-        # Tenter de récupérer les données du jeu via RAWG (avec cache)
-        try:
-            from src.core.commands.api.game_data_fetcher import fetch_game_data
-            
-            rawg_start = time.time()
-            game_data = await fetch_game_data(game_entity, config, cache_only=False)
-            rawg_time = (time.time() - rawg_start) * 1000  # ms
-            
-            if game_data:
-                if debug:
-                    print(f"[ROUTING] ✅ Données RAWG trouvées: {game_data.get('name')} ({rawg_time:.0f}ms)")
-                
-                # Formater la réponse basée sur les données RAWG
-                factual_response = format_game_answer(game_data, content)
-                
-                # Sécurité Twitch
-                if len(factual_response) > 480:
-                    factual_response = factual_response[:477] + "…"
-                
-                try:
-                    await message.channel.send(factual_response)
-                    if debug:
-                        print(f"[ROUTING] ✅ Réponse RAWG envoyée (0% LLM, 100% factuel)")
-                    return
-                except Exception as e:
-                    print(f"[ROUTING] ❌ Erreur envoi: {e}")
-                    return
-            else:
-                if debug:
-                    print(f"[ROUTING] ⚠️ Jeu '{game_entity}' non trouvé dans RAWG, fallback LLM")
-        except Exception as e:
-            if debug:
-                print(f"[ROUTING] ⚠️ Erreur fetch_game_data: {e}, fallback LLM")
-    
-    # Si pas de jeu détecté, vérifier routing date/sortie (ancien système)
-    game_name = await should_route_to_gameinfo(content)
-    
-    if game_name:
-        if debug:
-            print(f"[ROUTING] 🎯 Détection date/sortie: '{content[:60]}' → game='{game_name}' ({routing_time:.1f}ms)")
-        
-        # Appeler handle_game_command directement
-        from core.commands.game_command import handle_game_command
-        
-        igdb_start = time.time()
-        await handle_game_command(message, config, game_name, datetime.now())
-        igdb_time = (time.time() - igdb_start) * 1000  # ms
-        
-        if debug:
-            print(f"[ROUTING] ✅ IGDB terminé: @{user_name} | game={game_name} | latence={igdb_time:.0f}ms")
-        return
-    
+    # === MODE CHILL: PAS DE ROUTING ===
+    # En mode CHILL (conversation casual), on va TOUJOURS au LLM direct
+    # Le routing est réservé au mode ASK (!ask) pour les questions factuelles
     if debug:
-        print(f"[ROUTING] ⏭️  Pas de routage détecté ({routing_time:.1f}ms) → LLM")
+        print(f"[CHILL] 💬 Mode conversation → LLM direct (pas de routing)")
     
     # === Vérifier disponibilité LLM ===
     if not llm_available:
@@ -406,8 +257,8 @@ async def handle_chill_command(message: Message, config: dict, now, conversation
         send_time = (time.time() - send_start) * 1000  # ms
         
         if debug:
-            total_time = routing_time + (llm_time if 'llm_time' in locals() else 0) + (filter_time if 'filter_time' in locals() else 0) + send_time
+            total_time = (llm_time if 'llm_time' in locals() else 0) + (filter_time if 'filter_time' in locals() else 0) + send_time
             print(f"[SEND] ✅ Envoyé: @{user_name} | size={len(final_response)} chars | latence={send_time:.0f}ms")
-            print(f"[METRICS] ⏱️  Total: {total_time:.0f}ms (routing={routing_time:.0f} + llm={llm_time if 'llm_time' in locals() else 0:.0f} + filter={filter_time if 'filter_time' in locals() else 0:.0f} + send={send_time:.0f})")
+            print(f"[METRICS] ⏱️  Total: {total_time:.0f}ms (llm={llm_time if 'llm_time' in locals() else 0:.0f} + filter={filter_time if 'filter_time' in locals() else 0:.0f} + send={send_time:.0f})")
     except Exception as e:
         print(f"[SEND] ❌ Erreur: {e}")

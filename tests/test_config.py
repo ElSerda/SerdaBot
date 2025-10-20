@@ -9,9 +9,9 @@ class TestConfigLoading:
     """Tests for configuration loading."""
 
     def test_config_sample_exists(self):
-        """Test that config.sample.yaml exists and is valid."""
-        sample_path = Path('src/config/config.sample.yaml')
-        assert sample_path.exists(), "config.sample.yaml should exist"
+        """Test that config.example.yaml exists and is valid."""
+        sample_path = Path('src/config/config.example.yaml')
+        assert sample_path.exists(), "config.example.yaml should exist"
 
         with open(sample_path, 'r', encoding='utf-8') as f:
             config = yaml.safe_load(f)
@@ -20,8 +20,8 @@ class TestConfigLoading:
         assert isinstance(config, dict)
 
     def test_config_sample_has_required_sections(self):
-        """Test that config.sample.yaml has all required sections."""
-        sample_path = Path('src/config/config.sample.yaml')
+        """Test that config.example.yaml has all required sections."""
+        sample_path = Path('src/config/config.example.yaml')
 
         with open(sample_path, 'r', encoding='utf-8') as f:
             config = yaml.safe_load(f)
@@ -33,7 +33,7 @@ class TestConfigLoading:
 
     def test_config_sample_twitch_section(self):
         """Test Twitch section structure."""
-        sample_path = Path('src/config/config.sample.yaml')
+        sample_path = Path('src/config/config.example.yaml')
 
         with open(sample_path, 'r', encoding='utf-8') as f:
             config = yaml.safe_load(f)
@@ -45,7 +45,7 @@ class TestConfigLoading:
 
     def test_config_sample_bot_section(self):
         """Test bot section structure."""
-        sample_path = Path('src/config/config.sample.yaml')
+        sample_path = Path('src/config/config.example.yaml')
 
         with open(sample_path, 'r', encoding='utf-8') as f:
             config = yaml.safe_load(f)
