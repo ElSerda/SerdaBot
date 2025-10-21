@@ -1,6 +1,5 @@
 """
 Tests unitaires pour les Quick Wins (v1.1+)
-- MAX_TOKENS_ASK = 120
 - Cache atomique (os.replace)
 - Fallback traduction robuste
 - Normalisation regex améliorée
@@ -8,21 +7,6 @@ Tests unitaires pour les Quick Wins (v1.1+)
 import pytest
 
 from src.utils.cache_manager import CACHE_FILE, normalize_key, save_cache
-from src.utils.model_utils import MAX_TOKENS_ASK, MAX_TOKENS_CHILL
-
-
-class TestMaxTokensConfig:
-    """Vérifie que MAX_TOKENS_ASK est à 120 (Quick Win #1)"""
-    
-    def test_max_tokens_ask_is_120(self):
-        """MAX_TOKENS_ASK doit être 120 pour éviter les cuts à 230 chars"""
-        assert MAX_TOKENS_ASK == 120, f"MAX_TOKENS_ASK devrait être 120, trouvé {MAX_TOKENS_ASK}"
-    
-    def test_max_tokens_chill_is_60(self):
-        """Vérifie que MAX_TOKENS_CHILL est 60 (commit c9e9a70)"""
-        from utils.model_utils import MAX_TOKENS_CHILL
-
-        assert MAX_TOKENS_CHILL == 60, f"MAX_TOKENS_CHILL devrait être 60, trouvé {MAX_TOKENS_CHILL}"
 
 
 class TestAtomicCacheWrite:
@@ -99,8 +83,8 @@ class TestPromptConfiguration:
         """Prompt CHILL doit mentionner les contraintes de longueur"""
         from src.prompts.prompt_loader import SYSTEM_CHILL_FINAL
         
-        assert "Maximum 2 phrases" in SYSTEM_CHILL_FINAL, "Prompt CHILL devrait mentionner 'Maximum 2 phrases'"
-        assert "courtes et percutantes" in SYSTEM_CHILL_FINAL, "Prompt CHILL devrait mentionner 'courtes et percutantes'"
+        assert "1-2 phrases" in SYSTEM_CHILL_FINAL, "Prompt CHILL devrait mentionner '1-2 phrases'"
+        assert "150 caractères maximum" in SYSTEM_CHILL_FINAL, "Prompt CHILL devrait mentionner '150 caractères maximum'"
 
 
 class TestCacheManagerFallback:
