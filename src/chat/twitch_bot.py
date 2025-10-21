@@ -37,6 +37,45 @@ from src.utils.twitch_automod import TwitchAutoMod
 CONFIG = load_config()
 
 
+def fetch_user_id_sync(username: str, client_id: str, access_token: str) -> str | None:
+    """Récupère l'User ID Twitch d'un username de manière synchrone.
+    
+    Args:
+        username: Le nom d'utilisateur Twitch
+        client_id: Client ID de l'application
+        access_token: Token d'accès (app ou user)
+    
+    Returns:
+        L'User ID ou None si erreur
+    """
+    import requests
+    
+    try:
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Client-Id": client_id
+        }
+        
+        response = requests.get(
+            f"https://api.twitch.tv/helix/users?login={username}",
+            headers=headers,
+            timeout=5
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("data"):
+                user_id = data["data"][0]["id"]
+                return user_id
+        
+        print(f"❌ Erreur API Twitch ({response.status_code}): {response.text}")
+        return None
+        
+    except Exception as e:
+        print(f"❌ Exception lors de la récupération de l'User ID: {e}")
+        return None
+
+
 # Gestionnaire global pour capturer les exceptions non gérées
 def handle_exception(exc_type, exc_value, exc_traceback):
     if issubclass(exc_type, KeyboardInterrupt):
@@ -106,16 +145,40 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
 
         # Initialize API Sender (badge bot 🤖)
         try:
+            # Récupération auto du broadcaster_id si manquant
+            broadcaster_id = self.config["twitch"].get("broadcaster_id")
+            if not broadcaster_id:
+                print("🔍 broadcaster_id manquant, récupération automatique...")
+                channel_name = self.config["bot"]["channel"]
+                # Utiliser le bot_client_id si disponible, sinon fallback sur client_id
+                api_client_id = self.config["twitch"].get("bot_client_id") or self.config["twitch"]["client_id"]
+                api_token = self.config["twitch"].get("bot_user_token") or self.config["twitch"]["app_access_token"]
+                
+                broadcaster_id = fetch_user_id_sync(
+                    channel_name,
+                    api_client_id,
+                    api_token
+                )
+                if broadcaster_id:
+                    print(f"✅ broadcaster_id récupéré: {broadcaster_id} pour {channel_name}")
+                    self.config["twitch"]["broadcaster_id"] = broadcaster_id
+                else:
+                    raise ValueError(f"Impossible de récupérer l'ID de {channel_name}")
+            
+            # Utiliser le User Access Token du bot (pas l'App Access Token !)
+            bot_user_token = self.config["twitch"].get("bot_user_token") or self.config["twitch"]["app_access_token"]
+            api_client_id = self.config["twitch"].get("bot_client_id") or self.config["twitch"]["client_id"]
+            
             self.api_sender = TwitchAPISender(
-                client_id=self.config["twitch"]["client_id"],
+                client_id=api_client_id,  # Client ID du bot
                 app_access_token=self.config["twitch"]["app_access_token"],
-                bot_user_token=self.config["twitch"]["app_access_token"],  # On utilise l'app token
-                broadcaster_id=self.config["twitch"]["broadcaster_id"],
+                bot_user_token=bot_user_token,  # User Token avec user:write:chat + user:bot
+                broadcaster_id=broadcaster_id,
                 sender_id=self.config["twitch"]["bot_id"]
             )
             self.api_enabled = True
             print("🤖 API Send Chat Message activée (badge bot enabled)")
-        except (KeyError, TypeError) as e:
+        except (KeyError, TypeError, ValueError) as e:
             print(f"⚠️ API Send Chat désactivée (config manquante): {e}")
             self.api_enabled = False
 
@@ -794,6 +857,9 @@ def run_bot(config):
 if __name__ == "__main__":
     try:
         run_bot(CONFIG)
+    except KeyboardInterrupt:
+        print("\n👋 Arrêt du bot demandé (Ctrl+C)")
+        print("✅ Bot arrêté proprement")
     except Exception as e:
         print(f"[CRITICAL] Une erreur critique s'est produite : {e}")
         traceback.print_exc()
