@@ -234,23 +234,35 @@ async def _format_game_message(
         pub_str = ", ".join(publishers[:2])  # Max 2 publishers
         base += f" | Pub: {pub_str}"
     
-    # Ligne 2 (optionnelle): Notes et ratings
+    # Ligne 2 (optionnelle): Notes et ratings (UNIFIÉ SUR /5)
     rating_line = ""
     if metacritic or rating:
-        rating_parts = []
-        if metacritic:
-            rating_parts.append(f"⭐ Metacritic: {metacritic}/100")
-        if rating:
-            rating_parts.append(f"Note: {rating}/5")
-            if ratings_count > 0:
-                # Afficher le nombre d'avis de manière compacte
-                if ratings_count >= 1000:
-                    count_str = f"{ratings_count // 1000}k"
-                else:
-                    count_str = str(ratings_count)
-                rating_parts[-1] += f" ({count_str} avis)"
+        # Utiliser la note la plus pertinente, convertie en /5
+        final_rating = None
+        rating_source = ""
+        rating_count = 0
         
-        rating_line = " | ".join(rating_parts)
+        if rating:
+            # RAWG rating (déjà sur /5)
+            final_rating = rating
+            rating_source = "Note"
+            rating_count = ratings_count
+        elif metacritic:
+            # Metacritic (convertir /100 → /5)
+            final_rating = metacritic / 20.0  # 100→5, 95→4.75, 80→4.0
+            rating_source = "Metacritic"
+        
+        if final_rating:
+            rating_str = f"⭐ {rating_source}: {final_rating:.2f}/5"
+            if rating_count > 0:
+                # Afficher le nombre d'avis de manière compacte
+                if rating_count >= 1000:
+                    count_str = f"{rating_count // 1000}k"
+                else:
+                    count_str = str(rating_count)
+                rating_str += f" ({count_str} avis)"
+            
+            rating_line = rating_str
     
     # Construire le message principal (ligne 1 + ratings sur même ligne)
     message_main = base
