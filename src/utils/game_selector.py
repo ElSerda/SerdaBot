@@ -2,7 +2,8 @@
 """Matching de sélection utilisateur pour jeux multiples."""
 
 import re
-from typing import Optional, List, Dict
+from typing import Dict, List, Optional
+
 from unidecode import unidecode
 
 

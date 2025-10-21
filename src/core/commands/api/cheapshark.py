@@ -4,8 +4,9 @@ CheapShark API - Prix des jeux PC en temps réel.
 API Documentation: https://apidocs.cheapshark.com/
 Rate limit: Aucune limite (API publique gratuite)
 """
-import httpx
 from typing import Dict, Optional
+
+import httpx
 
 
 async def fetch_game_price(game_name: str) -> Optional[Dict]:

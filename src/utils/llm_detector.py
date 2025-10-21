@@ -5,8 +5,9 @@ et de déterminer automatiquement si le bot doit utiliser le mode fallback.
 """
 
 import os
-import httpx
 from typing import Optional
+
+import httpx
 
 
 def is_llm_available(endpoint: str = "http://localhost:1234/v1/models", timeout: float = 2.0) -> bool:

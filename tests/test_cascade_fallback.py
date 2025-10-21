@@ -5,8 +5,9 @@ Les appels HTTP échouent naturellement → cascade fonctionne.
 """
 
 import pytest
-from src.utils.model_utils import call_model
+
 from src.core.fallbacks import get_fallback_response
+from src.utils.model_utils import call_model
 
 
 class TestCascadeFallback:

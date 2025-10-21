@@ -5,8 +5,9 @@ Permet de gérer les blocked_terms (mots bannis) et les paramètres AutoMod
 directement via l'API Twitch, sans passer par le dashboard.
 """
 
+from typing import Dict, List, Optional
+
 import aiohttp
-from typing import List, Dict, Optional
 
 
 class TwitchAutoMod:

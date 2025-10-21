@@ -1,8 +1,7 @@
 """Prompt loading and building utilities for SerdaBot."""
 
 import re
-from typing import Optional, Sequence, Dict, Any, List
-
+from typing import Any, Dict, List, Optional, Sequence
 
 # === SYSTEM PROMPT - Production optimisée ===
 
@@ -41,6 +40,8 @@ Ton style :
 • Si c'est un compliment, sois faussement modeste
 • Jamais de métaphores floues, de poésie aléatoire, de faits inventés ou de phrases absurdes
 
+Réponds en 1-2 phrases ultra concises (150 caractères maximum). Va droit au but.
+
 Exemples de bonnes réponses :
 • « Salut ? T'as oublié mon café ou c'est juste un test d'attention ? »
 • « Hades ? Le jeu ou le dieu ? Parce que l'un t'envoie en enfer… l'autre aussi. »
@@ -48,7 +49,7 @@ Exemples de bonnes réponses :
 • « Lol ? Ah, t'as ri. Je note ça dans mon carnet de "moments rares". »
 • « De rien ! Mais si tu veux me remercier, offres-moi un abonnement… ou un cookie. »
 
-Maintenant, réponds à l'utilisateur avec ce style. Maximum 2 phrases courtes et percutantes.
+Maintenant, réponds à l'utilisateur avec ce style. Réponds de manière complète et naturelle.
 """
 
 
@@ -97,7 +98,7 @@ def to_question_fr(raw: str) -> str:
     return f"{t} ? Réponds en une phrase."
 
 
-def build_messages(mode: str, content: str, lang: str | None = None, extract_metadata: bool = False) -> Dict[str, Any]:
+def build_messages(mode: str, content: str, lang: str | None = None, extract_metadata: bool = False) -> Dict[str, Any]:  # pylint: disable=unused-argument
     """
     Build OpenAI/LM-Studio compatible messages structure.
     
@@ -242,7 +243,7 @@ def make_openai_payload(
         optimal_stop = ["\n\n"]  # Stop paragraphes seulement
         optimal_repeat = 1.1
     else:
-        optimal_max_tokens = 40  # Permet 1-2 phrases courtes (≈80-100 chars)
+        optimal_max_tokens = 150  # Permet réponses complètes sans troncature (300 tokens config → 150 réels)
         optimal_stop = None  # Pas de stop, naturel
         optimal_repeat = 1.0
     
@@ -355,7 +356,7 @@ def _join_short_quotes(quotes: Sequence[str], max_quotes: int = 3, per_quote_max
     return " | ".join(short)
 
 
-def load_system_prompt(lang: str | None = None, mode: str = "chill") -> str:
+def load_system_prompt(lang: str | None = None, mode: str = "chill") -> str:  # pylint: disable=unused-argument
     """
     Load system prompt optimized for Qwen 2.5-1.5B-Instruct.
     
@@ -372,7 +373,7 @@ def load_system_prompt(lang: str | None = None, mode: str = "chill") -> str:
     return SYSTEM_CHILL_FINAL
 
 
-def make_prompt(
+def make_prompt(  # pylint: disable=unused-argument
     mode: str,
     content: str,
     user: str,

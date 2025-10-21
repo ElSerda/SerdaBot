@@ -2,7 +2,7 @@
 
 from twitchio import Message  # pyright: ignore[reportPrivateImportUsage]
 
-from utils.cache_manager import add_to_cache, get_cache_stats, clear_cache
+from utils.cache_manager import add_to_cache, clear_cache, get_cache_stats
 
 
 async def handle_cacheadd_command(message: Message, config: dict, args: str):

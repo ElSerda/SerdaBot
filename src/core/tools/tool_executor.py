@@ -8,7 +8,6 @@ import importlib
 import json
 from pathlib import Path
 
-
 TOOLS_REGISTRY_PATH = Path(__file__).parent.parent.parent.parent / "config" / "tools_registry.json"
 
 

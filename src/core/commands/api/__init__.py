@@ -10,10 +10,10 @@ APIs disponibles :
     • CheapShark - Prix des jeux PC
     • HowLongToBeat - Durée de jeu estimée
 """
-from .game_data_fetcher import fetch_game_data
-from .rawg_api import fetch_game_from_rawg
 from .cheapshark import fetch_game_price, fetch_stores
+from .game_data_fetcher import fetch_game_data
 from .hltb import fetch_game_playtime, format_playtime_message
+from .rawg_api import fetch_game_from_rawg
 
 __all__ = [
     # Core

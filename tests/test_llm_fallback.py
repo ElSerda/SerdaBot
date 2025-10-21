@@ -1,8 +1,9 @@
 """Tests pour le système de fallback LLM."""
 
 import pytest
-from src.core.fallbacks import get_fallback_response, get_all_fallback_intents, add_custom_fallback
-from src.utils.llm_detector import is_llm_available, get_llm_mode
+
+from src.core.fallbacks import add_custom_fallback, get_all_fallback_intents, get_fallback_response
+from src.utils.llm_detector import get_llm_mode, is_llm_available
 
 
 class TestLLMDetector:

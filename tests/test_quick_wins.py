@@ -109,7 +109,7 @@ class TestCacheManagerFallback:
     def test_get_cached_or_fetch_returns_none_on_wikipedia_fail(self):
         """get_cached_or_fetch doit retourner None si Wikipedia échoue (pas 'Je ne sais pas')"""
         import inspect
-        
+
         from src.utils.cache_manager import get_cached_or_fetch
         
         source = inspect.getsource(get_cached_or_fetch)
@@ -146,7 +146,7 @@ class TestWikipediaRedirects:
     def test_hardware_redirects_exist(self):
         """Les redirections pour hardware doivent exister"""
         from src.utils.cache_manager import _WIKI_REDIRECTS
-        
+
         # CPU
         assert any("ryzen" in k for k in _WIKI_REDIRECTS), "Redirection pour Ryzen manquante"
         

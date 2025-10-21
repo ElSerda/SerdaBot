@@ -7,7 +7,6 @@ garantissant que le bot reste fonctionnel et amusant même sans modèle local.
 import random
 from typing import Literal
 
-
 # Répliques pré-définies par intention
 FALLBACKS = {
     "ask": [

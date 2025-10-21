@@ -238,3 +238,22 @@ class Translator:
             else:
                 print(f"🚨 [TRANSLATOR] Erreur inconnue: {e}")
                 return "⚠️ Erreur de traduction (service indisponible)"
+
+    def translate_chinese(self, text):
+        """
+        Traduit du chinois vers le français.
+        Utilise GoogleTranslator avec détection automatique.
+
+        Args:
+            text: Texte chinois à traduire
+
+        Returns:
+            Traduction française ou texte original si erreur
+        """
+        try:
+            translator_zh = GoogleTranslator(source='zh-CN', target='fr')
+            return translator_zh.translate(text)
+        except Exception as e:
+            print(f"🚨 [TRANSLATOR] Erreur traduction chinois: {e}")
+            # Retourne le texte original si la traduction échoue
+            return text

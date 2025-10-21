@@ -11,12 +11,12 @@ import re
 from twitchio import Message  # pyright: ignore[reportPrivateImportUsage]
 
 from core.cache import GAME_CACHE, get_cache_key, get_ttl_for_game
-from utils.game_utils import compress_platforms, normalize_platforms, sanitize_slug
+from utils.game_utils import compress_platforms, normalize_platforms
 
 from .api import fetch_game_data  # Nouveau module API centralisé
 
 
-async def handle_game_command(message: Message, config: dict, game_name: str, now):  # pylint: disable=unused-argument
+async def handle_game_command(message: Message, config: dict, game_name: str, now, bot=None):  # pylint: disable=unused-argument
     """
     Handler de la commande !gameinfo - Version refactorée.
     
@@ -28,6 +28,7 @@ async def handle_game_command(message: Message, config: dict, game_name: str, no
         config: Configuration globale du bot
         game_name: Nom du jeu recherché
         now: Timestamp actuel (pour cooldown, unused)
+        bot: Instance du bot (pour safe_send avec badge)
     """
     user = (message.author.name or "user").lower()
     debug = config["bot"].get("debug", False)
@@ -35,9 +36,10 @@ async def handle_game_command(message: Message, config: dict, game_name: str, no
 
     # Validation
     if not game_name.strip():
-        await message.channel.send(
-            f"@{user} Tu as oublié de spécifier un jeu. Utilise `!gameinfo nom_du_jeu`."
-        )
+        if bot:
+            await bot.safe_send(message.channel, f"@{user} Tu as oublié de spécifier un jeu. Utilise `!gameinfo nom_du_jeu`.")
+        else:
+            await message.channel.send(f"@{user} Tu as oublié de spécifier un jeu. Utilise `!gameinfo nom_du_jeu`.")
         if debug:
             print(f"[GAME] ⚠️ Requête vide ignorée de @{user}")
         return
@@ -63,14 +65,20 @@ async def handle_game_command(message: Message, config: dict, game_name: str, no
         if debug:
             print(f"[GAME] 📊 Popularité: {hit_count}× demandé")
     else:
-        await message.channel.send("🎮 Recherche du jeu...")
+        if bot:
+            await bot.safe_send(message.channel, "🎮 Recherche du jeu...")
+        else:
+            await message.channel.send("🎮 Recherche du jeu...")
         
         try:
             # 🔥 RÉCUPÉRATION via le nouveau module API (RAWG prioritaire)
             data = await fetch_game_data(game_name, config)
 
             if not data:
-                await message.channel.send(f"@{user} 🤔 Aucun jeu trouvé pour '{game_name}'. T'es sûr du nom ?")
+                if bot:
+                    await bot.safe_send(message.channel, f"@{user} 🤔 Aucun jeu trouvé pour '{game_name}'. T'es sûr du nom ?")
+                else:
+                    await message.channel.send(f"@{user} 🤔 Aucun jeu trouvé pour '{game_name}'. T'es sûr du nom ?")
                 if debug:
                     print(f"[GAME] ❌ Aucun résultat pour '{game_name}'")
                 return
@@ -95,7 +103,10 @@ async def handle_game_command(message: Message, config: dict, game_name: str, no
                 print(f"[GAME] 💾 Mis en cache '{game_name}' (TTL: {ttl}s)")
         
         except (RuntimeError, ValueError, KeyError, TypeError) as e:
-            await message.channel.send(f"@{user} 🔌 Désolé, j'ai pas accès à ma base de données jeux pour le moment ! 🎮💤")
+            if bot:
+                await bot.safe_send(message.channel, f"@{user} 🔌 Désolé, j'ai pas accès à ma base de données jeux pour le moment ! 🎮💤")
+            else:
+                await message.channel.send(f"@{user} 🔌 Désolé, j'ai pas accès à ma base de données jeux pour le moment ! 🎮💤")
             print(f"❌ [GAME] Exception API : {e}")
             return
     
@@ -110,13 +121,19 @@ async def handle_game_command(message: Message, config: dict, game_name: str, no
             print(f"[GAME] 🔍 Message complet:\n{result['main']}")
         
         # 📤 ENVOI (message principal seulement, pas de description)
-        await message.channel.send(result["main"])
+        if bot:
+            await bot.safe_send(message.channel, result["main"])
+        else:
+            await message.channel.send(result["main"])
         
         if debug:
             print(f"[GAME] ✅ Message envoyé sur Twitch (channel: {message.channel.name})")
     
     except (RuntimeError, ValueError, KeyError, TypeError) as e:
-        await message.channel.send(f"@{user} 🔌 Ma connexion aux infos jeux marche pas. Désolé ! (erreur formatage)")
+        if bot:
+            await bot.safe_send(message.channel, f"@{user} 🔌 Ma connexion aux infos jeux marche pas. Désolé ! (erreur formatage)")
+        else:
+            await message.channel.send(f"@{user} 🔌 Ma connexion aux infos jeux marche pas. Désolé ! (erreur formatage)")
         print(f"❌ [GAME] Exception formatage : {e}")
 
 

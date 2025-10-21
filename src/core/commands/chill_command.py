@@ -1,13 +1,65 @@
-"""Command handler for chill/sarcastic bot responses."""
+"""Commande !chill - Mode conversationnel"""
 
+import asyncio
 import re
 import time
 
 from twitchio import Message  # pyright: ignore[reportPrivateImportUsage]
 
 from prompts.prompt_loader import make_prompt
-from utils.model_utils import call_model
 from src.core.fallbacks import get_fallback_response
+from utils.model_utils import call_model
+
+
+def detect_and_translate_artifacts(response: str, translator, debug: bool = False) -> tuple[str, bool, str, str]:
+    """
+    Détecte les caractères chinois dans la réponse et ajoute leur traduction entre parenthèses.
+    
+    Exemple: "C'est une百科全书!" → "C'est une百科全书 (encyclopédie)!"
+    
+    Args:
+        response: Réponse du LLM
+        translator: Instance du Translator pour la traduction
+        debug: Mode debug pour logs
+    
+    Returns:
+        Tuple (response_filtrée, has_artifact, premier_mot_chinois, traduction)
+    """
+    # Pattern pour détecter les caractères chinois
+    chinese_pattern = r'([\u4e00-\u9fff]+)'
+    
+    # Variables pour tracker le premier artefact
+    first_chinese = None
+    first_translation = None
+    has_artifact = False
+    
+    # Fonction de remplacement appelée pour chaque match
+    def add_translation(match):
+        nonlocal first_chinese, first_translation, has_artifact
+        chinese_word = match.group(1)
+        translation = translator.translate_chinese(chinese_word)
+        
+        # Capturer le premier artefact pour la félicitation
+        if not has_artifact:
+            first_chinese = chinese_word
+            first_translation = translation
+            has_artifact = True
+        
+        if debug:
+            print(f"[ARTIFACT] 🀄 Détecté: '{chinese_word}' → '{translation}'")
+        
+        # Injecter la traduction juste après le mot chinois
+        return f"{chinese_word} ({translation})"
+    
+    # Remplacer chaque occurrence de caractères chinois
+    filtered_response = re.sub(chinese_pattern, add_translation, response)
+    
+    # Log si des artefacts ont été détectés
+    if has_artifact and debug:
+        print(f"[ARTIFACT] ✅ Filtre appliqué: {response[:50]}... → {filtered_response[:50]}...")
+        print(f"[ARTIFACT] 🎓 Easter egg détecté: '{first_chinese}' = '{first_translation}'")
+    
+    return filtered_response, has_artifact, first_chinese or "", first_translation or ""
 
 
 def detect_vague_game_response(user_msg: str, response: str) -> str | None:
@@ -118,19 +170,28 @@ def filter_generic_responses(response: str) -> str:
     return response
 
 
-async def handle_chill_command(message: Message, config: dict, now, conversation_manager=None, llm_available: bool = True):  # pylint: disable=unused-argument
-    """Handle chill command with sarcastic AI responses for all users.
+async def handle_chill_command(message: Message, config: dict, now, conversation_manager=None, llm_available: bool = True, bot=None, translator=None):  # pylint: disable=unused-argument
+    """Commande !chill - Répond en mode conversationnel.
     
     Args:
-        message: Message Twitch reçu
+        message: Message Twitch
         config: Configuration du bot
         now: Timestamp actuel
         conversation_manager: Gestionnaire de conversation (optionnel)
         llm_available: Si le LLM est disponible (défaut: True pour rétrocompatibilité)
+        bot: Instance du bot (pour safe_send avec badge)
+        translator: Instance du Translator (pour filtre artefacts multilingues)
     """
     botname = config["bot"]["name"].lower()
     debug = config["bot"].get("debug", False)
     user_name = str(message.author.name or "user").lower()
+    
+    # Helper pour envoyer avec ou sans badge
+    async def send(msg):
+        if bot:
+            await bot.safe_send(message.channel, msg)
+        else:
+            await message.channel.send(msg)
 
     # Extraire le contenu du message
     raw_content = message.content or ""
@@ -178,7 +239,7 @@ async def handle_chill_command(message: Message, config: dict, now, conversation
     # En mode CHILL (conversation casual), on va TOUJOURS au LLM direct
     # Le routing est réservé au mode ASK (!ask) pour les questions factuelles
     if debug:
-        print(f"[CHILL] 💬 Mode conversation → LLM direct (pas de routing)")
+        print("[CHILL] 💬 Mode conversation → LLM direct (pas de routing)")
     
     # === Vérifier disponibilité LLM ===
     if not llm_available:
@@ -188,19 +249,35 @@ async def handle_chill_command(message: Message, config: dict, now, conversation
         fallback_msg = get_fallback_response("chill")
         
         try:
-            await message.channel.send(fallback_msg)
+            await send(fallback_msg)
             if debug:
                 print(f"[CHILL] ✅ Fallback envoyé: {fallback_msg}")
         except Exception as e:
             print(f"[SEND] ❌ Erreur envoi fallback: {e}")
         return
     
+    # === CONTEXTE CONVERSATIONNEL ===
+    # Récupérer l'historique des 3 derniers messages de cet utilisateur
+    conversation_history = []
+    if conversation_manager:
+        state = conversation_manager.get(user_name)
+        with state.lock:
+            # Garder les 3 derniers messages (user + assistant)
+            conversation_history = state.messages[-6:] if len(state.messages) > 0 else []
+            if debug and conversation_history:
+                print(f"[CONTEXT] 💬 {len(conversation_history)} messages d'historique pour {user_name}")
+    
     # === LOGIQUE NORMALE (pas de trigger proactif) ===
-    # Construire le prompt avec make_prompt
-    prompt = make_prompt(mode="chill", content=content, user=user_name, game=game, title=title)
+    # Construire le prompt avec make_prompt + contexte
+    if conversation_history:
+        # Construire un contexte texte pour le prompt
+        context_text = "\n".join([f"{msg['role']}: {msg['content']}" for msg in conversation_history])
+        prompt = make_prompt(mode="chill", content=f"[Contexte conversation]\n{context_text}\n\n[Message actuel]\n{content}", user=user_name, game=game, title=title)
+    else:
+        prompt = make_prompt(mode="chill", content=content, user=user_name, game=game, title=title)
 
     if debug:
-        print(f"[LLM] 📝 Prompt: user={user_name} | content='{content[:40]}...' | size={len(prompt)} chars")
+        print(f"[LLM] 📝 Prompt: user={user_name} | content='{content[:40]}...' | size={len(prompt)} chars | historique={len(conversation_history)} msg")
 
     llm_start = time.time()
     response = await call_model(prompt, config, user=user_name, mode="chill")
@@ -209,13 +286,27 @@ async def handle_chill_command(message: Message, config: dict, now, conversation
     if debug:
         print(f"[LLM] 📨 Réponse: size={len(response) if response else 0} chars | latence={llm_time:.0f}ms | preview='{response[:60] if response else 'VIDE'}...'")
 
+    # === FILTRE ARTEFACTS MULTILINGUES ===
+    has_artifact = False
+    chinese_word = ""
+    translation = ""
+    if response and translator:
+        response, has_artifact, chinese_word, translation = detect_and_translate_artifacts(response, translator, debug)
+
+    # === SAUVEGARDER DANS L'HISTORIQUE ===",
+    if conversation_manager and response:
+        conversation_manager.add_message(user_name, "user", content)
+        conversation_manager.add_message(user_name, "assistant", response)
+        if debug:
+            print(f"[CONTEXT] 💾 Messages sauvegardés pour {user_name}")
+
     # Si tous les LLM ont échoué (LM Studio + OpenAI) → fallback répliques
     if response is None:
         if debug:
             print(f"[CHILL] 🤖 Tous LLM indisponibles → fallback répliques")
         fallback_msg = get_fallback_response("chill")
         try:
-            await message.channel.send(f"@{user_name} {fallback_msg}")
+            await send(f"@{user_name} {fallback_msg}")
             if debug:
                 print(f"[CHILL] ✅ Fallback error envoyé: {fallback_msg}")
         except Exception as e:
@@ -223,7 +314,7 @@ async def handle_chill_command(message: Message, config: dict, now, conversation
         return
     
     if not response:
-        await message.channel.send("🤷 Réponse manquante.")
+        await send("🤷 Réponse manquante.")
         return
 
     # Post-filter: détection réponses vagues sur les jeux
@@ -253,12 +344,27 @@ async def handle_chill_command(message: Message, config: dict, now, conversation
     
     try:
         send_start = time.time()
-        await message.channel.send(final_response)
+        await send(final_response)
         send_time = (time.time() - send_start) * 1000  # ms
         
         if debug:
             total_time = (llm_time if 'llm_time' in locals() else 0) + (filter_time if 'filter_time' in locals() else 0) + send_time
             print(f"[SEND] ✅ Envoyé: @{user_name} | size={len(final_response)} chars | latence={send_time:.0f}ms")
             print(f"[METRICS] ⏱️  Total: {total_time:.0f}ms (llm={llm_time if 'llm_time' in locals() else 0:.0f} + filter={filter_time if 'filter_time' in locals() else 0:.0f} + send={send_time:.0f})")
+        
+        # === EASTER EGG: FÉLICITATION RETARDÉE SI ARTEFACT CHINOIS ===
+        if has_artifact and chinese_word and translation:
+            if debug:
+                print(f"[ARTIFACT] ⏳ Attente 3s avant félicitation...")
+            
+            await asyncio.sleep(3)  # Suspense de 3 secondes
+            
+            congrats_msg = f"🎓 @{user_name} Wow ! Tu viens d'unlock un easter egg chinois : {chinese_word} = {translation} !"
+            try:
+                await send(congrats_msg)
+                if debug:
+                    print(f"[ARTIFACT] 🎉 Félicitation envoyée: {congrats_msg}")
+            except Exception as e:
+                print(f"[SEND] ❌ Erreur envoi félicitation: {e}")
     except Exception as e:
         print(f"[SEND] ❌ Erreur: {e}")

@@ -19,7 +19,6 @@ from twitchio.ext import commands  # type: ignore
 
 from src.config.config import load_config
 from src.core.commands.ask_command import handle_ask_command
-from src.utils.cache_manager import load_cache
 from src.core.commands.cache_commands import (
     handle_cacheadd_command,
     handle_cacheclear_command,
@@ -28,9 +27,12 @@ from src.core.commands.cache_commands import (
 from src.core.commands.chill_command import handle_chill_command
 from src.core.commands.donation_command import handle_donation_command
 from src.core.commands.game_command import handle_game_command
-from src.utils.translator import Translator
-from src.utils.twitch_automod import TwitchAutoMod
+from src.utils.cache_manager import load_cache
+from src.utils.conversation_manager import ConversationManager
 from src.utils.llm_detector import check_llm_status, get_llm_mode
+from src.utils.translator import Translator
+from src.utils.twitch_api_sender import TwitchAPISender
+from src.utils.twitch_automod import TwitchAutoMod
 
 CONFIG = load_config()
 
@@ -82,6 +84,13 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
         self.translator = Translator()
         self.auto_translate = self.config["bot"].get("auto_translate", True)
 
+        # Initialize conversation manager (contexte conversationnel)
+        rate_limiting = self.config.get("rate_limiting", {})
+        max_idle_time = rate_limiting.get("max_idle_time", 3600)
+        max_messages = rate_limiting.get("max_messages_per_user", 12)
+        self.conversation_manager = ConversationManager(ttl_seconds=max_idle_time, max_messages=max_messages)
+        print(f"💬 ConversationManager activé (TTL: {max_idle_time}s, max: {max_messages} messages)")
+
         # Initialize AutoMod (if credentials available)
         try:
             self.automod = TwitchAutoMod(
@@ -94,6 +103,21 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
         except (KeyError, TypeError) as e:
             print(f"⚠️ AutoMod désactivé (config manquante): {e}")
             self.automod_enabled = False
+
+        # Initialize API Sender (badge bot 🤖)
+        try:
+            self.api_sender = TwitchAPISender(
+                client_id=self.config["twitch"]["client_id"],
+                app_access_token=self.config["twitch"]["app_access_token"],
+                bot_user_token=self.config["twitch"]["app_access_token"],  # On utilise l'app token
+                broadcaster_id=self.config["twitch"]["broadcaster_id"],
+                sender_id=self.config["twitch"]["bot_id"]
+            )
+            self.api_enabled = True
+            print("🤖 API Send Chat Message activée (badge bot enabled)")
+        except (KeyError, TypeError) as e:
+            print(f"⚠️ API Send Chat désactivée (config manquante): {e}")
+            self.api_enabled = False
 
         # Track first connection for welcome message
         self._first_connect_done = False
@@ -113,6 +137,8 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
         else:  # auto
             self.llm_available, status_msg = check_llm_status(self.config)
             print(status_msg)
+            if not self.llm_available:
+                print("🔄 Note: Le LLM sera revérifié à chaque appel (retry intelligent)")
         self._channel_joined_once = False  # Track première connexion vs reconnexion
         self._last_reconnect_announce = 0  # Timestamp pour cooldown anti-spam
 
@@ -589,7 +615,7 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
 
                     translated = self.translator.translate(text, source, target)
                     if translated and not translated.startswith("⚠️"):
-                        flag_source = "🇫🇷" if source == "fr" else "🇬🇧"
+                        # flag_source = "🇫🇷" if source == "fr" else "🇬🇧"  # Unused for now
                         flag_target = "🇬🇧" if source == "fr" else "🇫🇷"
                         
                         # Format compact pour éviter overflow
@@ -619,7 +645,7 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
         if cleaned.startswith("!gameinfo ") and "game" in self.enabled:
             game_name = content_without_mention[10:].strip()
             await self.run_with_cooldown(
-                user, lambda: handle_game_command(message, self.config, game_name, now)
+                user, lambda: handle_game_command(message, self.config, game_name, now, bot=self)
             )
 
         elif cleaned.startswith("!ask") and "ask" in self.enabled:
@@ -632,7 +658,7 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
                 )
                 return
             await self.run_with_cooldown(
-                user, lambda: handle_ask_command(message, self.config, query, now, llm_available=self.llm_available)
+                user, lambda: handle_ask_command(message, self.config, query, now, llm_available=self.llm_available, bot=self)
             )
 
         elif cleaned.startswith("!cacheadd "):
@@ -655,11 +681,13 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
 
         elif is_mentioned and "chill" in self.enabled:
             await self.run_with_cooldown(
-                user, lambda: handle_chill_command(message, self.config, now, llm_available=self.llm_available)
+                user, lambda: handle_chill_command(message, self.config, now, conversation_manager=self.conversation_manager, llm_available=self.llm_available, bot=self, translator=self.translator)
             )
 
     async def safe_send(self, channel, content):
         """Envoie un message de manière sécurisée avec gestion des erreurs.
+
+        Utilise l'API Send Chat Message (badge bot 🤖) avec fallback IRC.
 
         Args:
             channel: Le canal où envoyer le message
@@ -667,10 +695,25 @@ class TwitchBot(commands.Bot):  # pyright: ignore[reportPrivateImportUsage]
         """
         if len(content) > 500:
             content = content[:497] + "..."
+        
+        # Essayer l'API d'abord (badge bot 🤖)
+        if self.api_enabled:
+            try:
+                print(f"[API] 📤 Tentative d'envoi via API: {content[:100]}...")
+                success = await self.api_sender.send_message(content, use_badge=True)
+                if success:
+                    print("[API] ✅ Message envoyé avec badge bot!")
+                    return
+                else:
+                    print("[API] ⚠️ Échec API, fallback vers IRC...")
+            except Exception as e:
+                print(f"[API] ❌ Exception API: {e}, fallback vers IRC...")
+        
+        # Fallback IRC si API désactivée ou échouée
         try:
-            print(f"[SEND] 📤 Tentative d'envoi: {content[:100]}...")
+            print(f"[IRC] 📤 Envoi via IRC: {content[:100]}...")
             await channel.send(content)
-            print("[SEND] ✅ Message envoyé avec succès!")
+            print("[IRC] ✅ Message envoyé!")
         except ConnectionError as e:
             print(f"❌ Erreur de connexion lors de l'envoi: {e}")
         except TimeoutError as e:

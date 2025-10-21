@@ -1,12 +1,13 @@
 """Command handler for !ask - AI-powered question answering."""
 
 import re
+
 from twitchio import Message  # pyright: ignore[reportPrivateImportUsage]
 
 from prompts.prompt_loader import make_prompt
-from utils.model_utils import call_model
-from src.utils.cache_manager import get_cached_or_fetch
 from src.core.fallbacks import get_fallback_response
+from src.utils.cache_manager import get_cached_or_fetch
+from utils.model_utils import call_model
 
 
 async def extract_game_entity(question: str) -> str | None:
@@ -151,7 +152,7 @@ def format_game_answer(game_data: dict, question: str) -> str:
     return response
 
 
-async def handle_ask_command(message: Message, config: dict, question: str, now, llm_available: bool = True):  # pylint: disable=unused-argument
+async def handle_ask_command(message: Message, config: dict, question: str, now, llm_available: bool = True, bot=None):  # pylint: disable=unused-argument
     """Handle the !ask command to answer user questions using AI.
     
     Args:
@@ -160,14 +161,20 @@ async def handle_ask_command(message: Message, config: dict, question: str, now,
         question: Question de l'utilisateur
         now: Timestamp actuel
         llm_available: Si le LLM est disponible (défaut: True pour rétrocompatibilité)
+        bot: Instance du bot (pour safe_send avec badge)
     """
     user = (message.author.name or "user").lower()
     debug = config["bot"].get("debug", False)
+    
+    # Helper pour envoyer avec ou sans badge
+    async def send(msg):
+        if bot:
+            await bot.safe_send(message.channel, msg)
+        else:
+            await message.channel.send(msg)
 
     if not question.strip():
-        await message.channel.send(
-            f"@{user} Tu as oublié de poser ta question après `!ask`."
-        )
+        await send(f"@{user} Tu as oublié de poser ta question après `!ask`.")
         if debug:
             print(f"[ASK] ⚠️ Question vide reçue de @{user}")
         return
@@ -203,7 +210,7 @@ async def handle_ask_command(message: Message, config: dict, question: str, now,
                 try:
                     if debug:
                         print(f"[ASK] 📤 Réponse factuelle RAWG: {factual_response[:100]}...")
-                    await message.channel.send(f"@{user} {factual_response}")
+                    await send(f"@{user} {factual_response}")
                     if debug:
                         print(f"[ASK] ✅ Réponse RAWG envoyée (0% LLM, 100% factuel)")
                     return
@@ -236,7 +243,7 @@ async def handle_ask_command(message: Message, config: dict, question: str, now,
         try:
             if debug:
                 print(f"[SEND] 📤 Envoi CACHE: {final_response[:100]}...")
-            await message.channel.send(f"@{user} {final_response}")
+            await send(f"@{user} {final_response}")
             if debug:
                 print(f"[SEND] ✅ Envoyé avec succès (cache)")
         except Exception as e:
@@ -252,7 +259,7 @@ async def handle_ask_command(message: Message, config: dict, question: str, now,
         fallback_msg = get_fallback_response("ask")
         
         try:
-            await message.channel.send(f"@{user} {fallback_msg}")
+            await send(f"@{user} {fallback_msg}")
             if debug:
                 print(f"[ASK] ✅ Fallback envoyé: {fallback_msg}")
         except Exception as e:
@@ -280,7 +287,7 @@ async def handle_ask_command(message: Message, config: dict, question: str, now,
             print(f"[ASK] 🤖 Tous LLM indisponibles → fallback répliques")
         fallback_msg = get_fallback_response("ask_error")
         try:
-            await message.channel.send(f"@{user} {fallback_msg}")
+            await send(f"@{user} {fallback_msg}")
             if debug:
                 print(f"[ASK] ✅ Fallback error envoyé: {fallback_msg}")
         except Exception as e:
@@ -288,7 +295,7 @@ async def handle_ask_command(message: Message, config: dict, question: str, now,
         return
     
     if not response:
-        await message.channel.send(f"@{user} ⚠️ Erreur ou pas de réponse.")
+        await send(f"@{user} ⚠️ Erreur ou pas de réponse.")
         return
 
     # Sécurité Twitch (500 chars max absolu avec @mention)
@@ -299,7 +306,7 @@ async def handle_ask_command(message: Message, config: dict, question: str, now,
     try:
         if debug:
             print(f"[SEND] 📤 Envoi ASK LLM: {final_response[:100]}...")
-        await message.channel.send(f"@{user} {final_response}")
+        await send(f"@{user} {final_response}")
         if debug:
             print(f"[ASK] ✅ Réponse LLM envoyée à @{user}")
     except Exception as e:

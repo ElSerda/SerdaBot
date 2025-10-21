@@ -18,7 +18,6 @@ from config.config import load_config
 from core.cache import GAME_CACHE
 from core.commands.api import fetch_game_data
 
-
 # Liste de jeux populaires à mettre en cache
 POPULAR_GAMES = [
     # AAA récents

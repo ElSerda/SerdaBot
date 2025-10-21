@@ -41,9 +41,9 @@ os.environ["BOT_ENV"] = "dev"
 
 from config.config import load_config
 from core.cache import GAME_CACHE
-from core.commands.game_command import handle_game_command
 from core.commands.ask_command import handle_ask_command
 from core.commands.chill_command import handle_chill_command
+from core.commands.game_command import handle_game_command
 
 
 # Fake Message Twitch
@@ -334,18 +334,6 @@ async def simulate_llm_message(viewer: dict, message_text: str, config: dict, st
         print(f"❌ ERREUR LLM: {e}")
         import traceback
         traceback.print_exc()
-
-
-
-async def run_crash_test():
-    """Lance le crash test complet."""
-    print("\n" + "="*80)
-    print("🚀 CRASH TEST COMPLET DU PIPELINE SERDABOT")
-    print("="*80)
-    print("📝 Test avec messages de chat réalistes (avec/sans commandes)")
-    print("🤖 Le bot ne répond qu'aux messages contenant !gameinfo")
-    print("="*80)
-
 
 
 async def run_crash_test():

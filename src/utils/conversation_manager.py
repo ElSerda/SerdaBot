@@ -1,10 +1,10 @@
 # src/utils/conversation_manager.py
 
-import time
 import threading
-from collections import defaultdict
-from typing import Any, Optional, Dict, List, Tuple
+import time
 from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Tuple
+
 
 @dataclass
 class ConversationState:
@@ -36,13 +36,15 @@ class ConversationManager:
 
     def add_message(self, user_id: str, role: str, content: str, ts: Optional[float] = None):
         state = self.get(user_id)
-        with state.lock:
-            state.messages.append({
-                "role": role,
-                "content": content,
-                "timestamp_monotonic": ts or time.monotonic()
-            })
-            self.prune_messages(user_id, keep_last=self._max_messages)
+        # Note: Pas de lock ici car appelé dans contexte asyncio (single-threaded)
+        state.messages.append({
+            "role": role,
+            "content": content,
+            "timestamp_monotonic": ts or time.monotonic()
+        })
+        # Prune inline sans lock
+        if len(state.messages) > self._max_messages:
+            state.messages = state.messages[-self._max_messages:]
 
     def set_pending(self, user_id: str, type_: str, data: dict, ts: Optional[float] = None):
         state = self.get(user_id)
