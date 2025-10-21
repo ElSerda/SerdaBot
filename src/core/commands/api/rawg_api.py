@@ -11,36 +11,38 @@ from typing import Dict, List, Optional
 import httpx
 
 
-def _score_game_candidate(game: dict, query: str) -> float:
+def _score_game_candidate(game: dict, query: str, user_year: Optional[int] = None) -> float:
     """
-    Score un candidat de jeu selon plusieurs critères de pertinence.
+    Score un candidat de jeu selon plusieurs critères (système 0-100 pts).
     
     Args:
         game: Données brutes RAWG du jeu candidat
-        query: Requête de l'utilisateur (ex: "cyberpunk", "gta")
+        query: Requête de l'utilisateur (ex: "cyberpunk", "hades 2")
+        user_year: Année/numéro extraite de la requête (optionnel)
     
     Returns:
-        Score total (0-100+), plus élevé = meilleur match
+        Score total (0-100), plus élevé = meilleur match
         
-    Critères de scoring:
-        - Similarité nom: 40 pts (SequenceMatcher)
-        - Bonus contextuel: 20-25 pts (cyberpunk→2077, gta→v)
-        - Rating 4+: 20 pts
-        - Popularité 1000+: 15 pts
-        - Metacritic: 10 pts (scaled)
-        - Récent (2015+): 5 pts
-        - Web/Browser: -30 pts (penalty)
+    Scoring (partir de 0 et incrémenter):
+        ✅ Similarité nom: 0-40 pts (fuzzy match)
+        ✅ Bonus contextuel: +15 pts (cyberpunk→2077, gta→v)
+        ✅ Qualité rating: +15 pts (>= 4.0)
+        ✅ Popularité: +10 pts (>= 1000 avis)
+        ✅ Metacritic: +10 pts (scaled 0-10)
+        ✅ Plateformes: +5 pts (PC/consoles)
+        ✅ Bonus AAA: +5 pts (jeux populaires)
+        ✅ Bonus année: +20 pts (match année/suite)
+        ❌ Pénalités soustraites à la fin
     """
     score = 0.0
     game_name = game.get('name', '').lower()
     query_lower = query.lower()
     
-    # 1. Similarité du nom (40 pts max)
+    # 1️⃣ Similarité du nom (40 pts max)
     similarity = SequenceMatcher(None, query_lower, game_name).ratio()
     score += similarity * 40
     
-    # 2. Bonus contextuel (20-25 pts)
-    # Détecter les patterns courants: cyberpunk→2077, gta→v, zelda→breath
+    # 2️⃣ Bonus contextuel (15 pts)
     contextual_keywords = {
         'cyberpunk': ['2077', '2020'],
         'gta': ['v', 'vice', 'san andreas', 'iv'],
@@ -49,45 +51,40 @@ def _score_game_candidate(game: dict, query: str) -> float:
         'assassin': ["creed", 'odyssey', 'valhalla'],
         'red dead': ['redemption', '2'],
         'elder scrolls': ['skyrim', 'oblivion', 'morrowind'],
+        'hades': ['ii', '2'],
     }
     
     for key, keywords in contextual_keywords.items():
         if key in query_lower:
             for keyword in keywords:
                 if keyword in game_name:
-                    score += 25
+                    score += 15
                     break
     
-    # 3. Rating utilisateur (20 pts si >= 4.0)
+    # 3️⃣ Qualité rating (15 pts)
     rating = game.get('rating', 0)
-    if rating and rating >= 4.0:
-        score += 20
-    elif rating and rating >= 3.5:
-        score += 10
+    if rating >= 4.0:
+        score += 15
+    elif rating >= 3.5:
+        score += 8
+    elif rating >= 3.0:
+        score += 3
     
-    # 4. Popularité (15 pts si >= 1000 ratings)
+    # 4️⃣ Popularité (10 pts)
     ratings_count = game.get('ratings_count', 0)
     if ratings_count >= 1000:
-        score += 15
+        score += 10
     elif ratings_count >= 500:
-        score += 8
+        score += 5
+    elif ratings_count >= 100:
+        score += 2
     
-    # 5. Metacritic (10 pts max, scaled)
+    # 5️⃣ Metacritic (10 pts max, scaled)
     metacritic = game.get('metacritic')
     if metacritic:
         score += (metacritic / 100) * 10
     
-    # 6. Récence (5 pts si après 2015)
-    released = game.get('released', '')
-    if released:
-        try:
-            year = int(released.split('-')[0])
-            if year >= 2015:
-                score += 5
-        except (ValueError, IndexError):
-            pass
-    
-    # 7. PENALTY: Web/Browser games (-30 pts)
+    # 6️⃣ Plateformes (5 pts)
     platforms = game.get('platforms', []) or []
     platform_names = []
     for p in platforms:
@@ -99,20 +96,11 @@ def _score_game_candidate(game: dict, query: str) -> float:
                     platform_names.append(name)
     
     if platform_names:
-        if any('web' in name or 'browser' in name for name in platform_names):
-            # Si UNIQUEMENT Web/Browser, grosse pénalité
-            if all('web' in name or 'browser' in name for name in platform_names):
-                score -= 30
-            else:
-                # Si Web + autres plateformes, pénalité réduite
-                score -= 10
-        
-        # 8. Bonus plateformes majeures (10 pts)
         major_platforms = ['playstation', 'xbox', 'nintendo', 'pc']
         if any(major in ' '.join(platform_names) for major in major_platforms):
-            score += 10
+            score += 5
     
-    # 9. Bonus jeux AAA populaires (15 pts)
+    # 7️⃣ Bonus AAA (5 pts)
     aaa_keywords = [
         'grand theft auto', 'gta v', 'gta 5',
         'cyberpunk 2077',
@@ -121,46 +109,82 @@ def _score_game_candidate(game: dict, query: str) -> float:
         'red dead redemption',
         'elden ring',
         'god of war',
+        'hades',
     ]
     
     if any(keyword in game_name for keyword in aaa_keywords):
-        score += 15
+        score += 5
     
-    # 10. PENALTY: Fan games, clones, mobile ports (-20 pts)
-    clone_keywords = ['fan', 'clone', 'mobile', 'demo', 'scratch', 'fan-made', 'fangame']
-    if any(keyword in game_name for keyword in clone_keywords):
-        score -= 20
+    # 8️⃣ Bonus année/suite (20 pts) - Si user cherche "Hades 2", "Cyberpunk 2077"
+    if user_year:
+        released = game.get('released', '')
+        if released:
+            try:
+                game_year = int(released.split('-')[0])
+                
+                # Cas 1: Année complète (ex: "Cyberpunk 2077" → 2077)
+                if user_year >= 1990 and game_year == user_year:
+                    score += 20
+                
+                # Cas 2: Numéro de suite (ex: "Hades 2" → cherche "II" ou "2")
+                elif user_year < 1990:
+                    roman_map = {2: 'II', 3: 'III', 4: 'IV', 5: 'V', 6: 'VI', 7: 'VII', 8: 'VIII', 9: 'IX', 10: 'X'}
+                    has_number = f" {user_year}" in game_name or f":{user_year}" in game_name
+                    roman_numeral = roman_map.get(user_year, '')
+                    has_roman = roman_numeral and f" {roman_numeral.lower()}" in game_name
+                    
+                    if has_number or has_roman:
+                        score += 20
+            except (ValueError, IndexError):
+                pass
     
-    # 11. PENALTY: Faible crédibilité (peu d'avis) (-20 à -30 pts)
+    # ❌ PÉNALITÉS (soustraire à la fin)
+    penalties = 0
+    
+    # Pénalité 1: Web/Browser uniquement (-30 pts)
+    if platform_names:
+        if all('web' in name or 'browser' in name for name in platform_names):
+            penalties += 30
+    
+    # Pénalité 2: Faible crédibilité (-20 pts)
     if ratings_count < 10:
-        score -= 30
+        penalties += 20
     elif ratings_count < 50:
-        score -= 10
+        penalties += 10
     
-    # 12. PENALTY: Rating 0.0 avec peu d'avis = probablement non-jouable (-25 pts)
+    # Pénalité 3: Rating 0.0 suspect (-15 pts)
     if rating == 0.0 and ratings_count < 5:
-        score -= 25
+        penalties += 15
     
-    # 13. PENALTY: Jeux très anciens (<2000) sauf si recherche explicite (-15 pts)
-    # Évite les vieux jeux non pertinents (ex: GTA 1997 quand on cherche "gta")
+    # Pénalité 4: Clones/fan games (-20 pts)
+    clone_keywords = ['fan', 'clone', 'demo', 'scratch', 'fan-made', 'fangame']
+    if any(keyword in game_name for keyword in clone_keywords):
+        penalties += 20
+    
+    # Pénalité 5: Jeux très anciens (-15 pts)
+    released = game.get('released', '')
     if released:
         try:
             year = int(released.split('-')[0])
             if year < 2000:
-                score -= 15
+                penalties += 15
         except (ValueError, IndexError):
             pass
     
-    return score
+    # Appliquer les pénalités
+    final_score = max(0, score - penalties)
+    
+    return final_score
 
 
-async def fetch_game_from_rawg(game_name: str, config: dict) -> Optional[Dict]:
+async def fetch_game_from_rawg(game_name: str, config: dict, user_year: Optional[int] = None) -> Optional[Dict]:
     """
     Récupère les données complètes d'un jeu depuis RAWG (async).
     
     Args:
         game_name: Nom du jeu à rechercher
         config: Configuration globale du bot (contient rawg.api_key)
+        user_year: Année/numéro extraite de la requête (optionnel)
     
     Returns:
         Dict normalisé avec toutes les données du jeu, ou None si non trouvé.
@@ -223,7 +247,7 @@ async def fetch_game_from_rawg(game_name: str, config: dict) -> Optional[Dict]:
             # Scorer tous les candidats
             scored_results = []
             for game in results:
-                score = _score_game_candidate(game, game_name)
+                score = _score_game_candidate(game, game_name, user_year=user_year)
                 scored_results.append((score, game))
                 
                 # Debug: afficher le score de chaque candidat
