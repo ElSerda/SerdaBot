@@ -97,7 +97,7 @@ async def fetch_game_data(game_name: str, config: dict, cache_only: bool = False
         candidates.append((score, steam_data, "Steam"))
         print(f"[GAME-DATA] 📊 Steam: {steam_data['name']} (score: {score:.1f})")
     
-    # 🏆 ÉTAPE 3 : Sélectionner le meilleur
+    # 🏆 ÉTAPE 3 : Sélectionner le meilleur jeu + meilleure description
     if candidates:
         candidates.sort(key=lambda x: x[0], reverse=True)
         best_score, best_data, best_source = candidates[0]
@@ -105,6 +105,33 @@ async def fetch_game_data(game_name: str, config: dict, cache_only: bool = False
         # Vérifier que le score est acceptable (> 50)
         if best_score >= 50:
             print(f"[GAME-DATA] 🏆 Meilleur résultat: {best_source} - {best_data['name']} (score: {best_score:.1f})")
+            
+            # 📝 ÉTAPE 3.1 : Fusionner les meilleures données des deux sources
+            # Récupérer les données de l'autre source
+            other_data = rawg_data if best_source == "Steam" else steam_data
+            
+            if other_data and isinstance(other_data, dict):
+                # Compléter les données manquantes avec l'autre source
+                if not best_data.get('rating') and other_data.get('rating'):
+                    best_data['rating'] = other_data['rating']
+                
+                if not best_data.get('metacritic') and other_data.get('metacritic'):
+                    best_data['metacritic'] = other_data['metacritic']
+                
+                if not best_data.get('ratings_count') and other_data.get('ratings_count'):
+                    best_data['ratings_count'] = other_data['ratings_count']
+            
+            # 📝 ÉTAPE 3.2 : Sélection intelligente de la description
+            if steam_data and isinstance(steam_data, dict):
+                steam_summary = steam_data.get('summary', '')
+                if steam_summary and _is_french(steam_summary):
+                    print(f"[GAME-DATA] 🇫🇷 Description Steam FR native détectée, on la prend !")
+                    best_data['summary'] = steam_summary
+                    best_data['summary_source'] = 'Steam (FR natif)'
+                elif not best_data.get('summary'):
+                    # Si le meilleur jeu n'a pas de summary, prendre celui de Steam même en anglais
+                    best_data['summary'] = steam_summary
+                    best_data['summary_source'] = 'Steam (EN)'
             
             # Mettre en cache
             ttl = get_ttl_for_game(best_data.get('release_year', '?'))
@@ -162,34 +189,65 @@ async def fetch_game_data(game_name: str, config: dict, cache_only: bool = False
     return None
 
 
+def _is_french(text: str) -> bool:
+    """
+    Détecte si un texte est en français (heuristique simple).
+    Retourne True si le texte semble être en français.
+    """
+    if not text or len(text) < 20:
+        return False
+    
+    text_lower = text.lower()
+    
+    # Mots/caractères typiquement français
+    french_indicators = [
+        ' le ', ' la ', ' les ', ' des ', ' un ', ' une ',
+        ' vous ', ' dans ', ' avec ', ' pour ', ' sur ',
+        'à ', 'où ', 'é', 'è', 'ê', 'ç'
+    ]
+    
+    # Mots typiquement anglais
+    english_indicators = [
+        ' the ', ' you ', ' your ', ' with ', ' from ',
+        ' this ', ' that ', ' these ', ' those '
+    ]
+    
+    french_count = sum(1 for indicator in french_indicators if indicator in text_lower)
+    english_count = sum(1 for indicator in english_indicators if indicator in text_lower)
+    
+    # Si plus d'indicateurs français que anglais, c'est probablement du français
+    return french_count > english_count
+
+
 def _extract_year_from_query(query: str) -> Optional[int]:
     """
-    Extrait une année de la requête utilisateur.
-    Gère les formats: "2077", "2", "II", "V", etc.
-    
-    Args:
-        query: Requête de recherche (ex: "Hades 2", "Cyberpunk 2077", "GTA V")
-    
-    Returns:
-        Année extraite (ex: 2077, 2, 5) ou None
+    Extrait une année d'une requête de jeu (ex: "cyberpunk 2077" → 2077, "hades 2" → 2).
+    Retourne None si aucune année n'est détectée.
     """
     import re
     
-    # Pattern 1: Année complète 4 chiffres (1900-2099)
-    full_year_match = re.search(r'\b(19|20)\d{2}\b', query)
-    if full_year_match:
-        return int(full_year_match.group(0))
+    query_lower = query.lower()
     
-    # Pattern 2: Chiffre simple 2-9 (ex: "Hades 2" → 2)
-    simple_number_match = re.search(r'\b([2-9])\b', query)
-    if simple_number_match:
-        return int(simple_number_match.group(0))
+    # 1. Chercher une année complète (1900-2099)
+    year_match = re.search(r'\b(19|20)\d{2}\b', query)
+    if year_match:
+        return int(year_match.group(0))
     
-    # Pattern 3: Chiffres romains
-    roman_map = {'II': 2, 'III': 3, 'IV': 4, 'V': 5, 'VI': 6, 'VII': 7, 'VIII': 8, 'IX': 9, 'X': 10}
-    roman_match = re.search(r'\b(II|III|IV|V|VI|VII|VIII|IX|X)\b', query, re.IGNORECASE)
-    if roman_match:
-        return roman_map.get(roman_match.group(0).upper())
+    # 2. Chercher un chiffre simple (2-9) qui peut être une suite
+    simple_num = re.search(r'\b([2-9])\b', query_lower)
+    if simple_num:
+        return int(simple_num.group(1))
+    
+    # 3. Chercher des chiffres romains (II-X) pour les suites
+    roman_map = {
+        'ii': 2, 'iii': 3, 'iv': 4, 'v': 5,
+        'vi': 6, 'vii': 7, 'viii': 8, 'ix': 9, 'x': 10
+    }
+    
+    for roman_numeral, value in roman_map.items():
+        # Chercher le chiffre romain (insensible à la casse)
+        if re.search(r'\b' + roman_numeral + r'\b', query_lower):
+            return value
     
     return None
 
