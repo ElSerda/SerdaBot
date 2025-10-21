@@ -12,6 +12,7 @@ from twitchio import Message  # pyright: ignore[reportPrivateImportUsage]
 
 from core.cache import GAME_CACHE, get_cache_key, get_ttl_for_game
 from utils.game_utils import compress_platforms, normalize_platforms
+from utils.translator import Translator
 
 from .api import fetch_game_data  # Nouveau module API centralisé
 
@@ -109,6 +110,33 @@ async def handle_game_command(message: Message, config: dict, game_name: str, no
                 await message.channel.send(f"@{user} 🔌 Désolé, j'ai pas accès à ma base de données jeux pour le moment ! 🎮💤")
             print(f"❌ [GAME] Exception API : {e}")
             return
+    
+    # 🌍 TRADUCTION du summary si nécessaire (après cache, avant formatage)
+    summary = data.get('summary', '')
+    if summary:
+        # Détecter si c'est de l'anglais (heuristique simple)
+        is_english = _detect_english(summary)
+        
+        if is_english:
+            if debug:
+                print(f"[GAME] 🌍 Summary détecté en anglais, traduction...")
+            
+            try:
+                translator = Translator()
+                translated = translator.translate(summary, source='en', target='fr')
+                
+                if translated and not translated.startswith('⚠️'):
+                    data['summary'] = translated
+                    if debug:
+                        print(f"[GAME] ✅ Summary traduit: {translated[:80]}...")
+                else:
+                    if debug:
+                        print(f"[GAME] ⚠️ Traduction échouée, garde l'anglais")
+            except Exception as e:
+                print(f"[GAME] ❌ Erreur traduction: {e}")
+        else:
+            if debug:
+                print(f"[GAME] ✅ Summary déjà en français")
     
     # 📊 FORMATAGE du message (toujours refait pour avoir le bon @user)
     try:
@@ -273,3 +301,41 @@ async def _format_game_message(
             print(f"[GAME] Rating: {rating}/5 ({ratings_count} avis)")
     
     return result
+
+
+def _detect_english(text: str) -> bool:
+    """
+    Détecte si un texte est en anglais (heuristique simple).
+    
+    Vérifie la présence de mots anglais courants absents du français.
+    Plus précis qu'une détection de langue complète pour ce cas.
+    
+    Args:
+        text: Texte à analyser
+    
+    Returns:
+        True si probablement anglais, False sinon
+    """
+    if not text or len(text) < 20:
+        return False
+    
+    text_lower = text.lower()
+    
+    # Mots anglais courants dans les descriptions de jeux
+    english_indicators = [
+        ' the ', ' you ', ' your ', ' with ', ' from ',
+        ' this ', ' that ', ' have ', ' will ', ' can ',
+        ' game ', ' play ', ' world ', ' story '
+    ]
+    
+    # Mots français uniques (absents en anglais)
+    french_indicators = [
+        ' le ', ' la ', ' les ', ' des ', ' vous ',
+        ' dans ', ' avec ', ' pour ', ' sur ', ' est '
+    ]
+    
+    english_count = sum(1 for word in english_indicators if word in text_lower)
+    french_count = sum(1 for word in french_indicators if word in text_lower)
+    
+    # Si plus de mots anglais que français → probablement anglais
+    return english_count > french_count
