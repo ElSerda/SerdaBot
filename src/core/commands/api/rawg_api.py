@@ -5,9 +5,153 @@ API Documentation: https://rawg.io/apidocs
 Rate limit: 1000 requêtes/jour (gratuit)
 """
 
+from difflib import SequenceMatcher
 from typing import Dict, List, Optional
 
 import httpx
+
+
+def _score_game_candidate(game: dict, query: str) -> float:
+    """
+    Score un candidat de jeu selon plusieurs critères de pertinence.
+    
+    Args:
+        game: Données brutes RAWG du jeu candidat
+        query: Requête de l'utilisateur (ex: "cyberpunk", "gta")
+    
+    Returns:
+        Score total (0-100+), plus élevé = meilleur match
+        
+    Critères de scoring:
+        - Similarité nom: 40 pts (SequenceMatcher)
+        - Bonus contextuel: 20-25 pts (cyberpunk→2077, gta→v)
+        - Rating 4+: 20 pts
+        - Popularité 1000+: 15 pts
+        - Metacritic: 10 pts (scaled)
+        - Récent (2015+): 5 pts
+        - Web/Browser: -30 pts (penalty)
+    """
+    score = 0.0
+    game_name = game.get('name', '').lower()
+    query_lower = query.lower()
+    
+    # 1. Similarité du nom (40 pts max)
+    similarity = SequenceMatcher(None, query_lower, game_name).ratio()
+    score += similarity * 40
+    
+    # 2. Bonus contextuel (20-25 pts)
+    # Détecter les patterns courants: cyberpunk→2077, gta→v, zelda→breath
+    contextual_keywords = {
+        'cyberpunk': ['2077', '2020'],
+        'gta': ['v', 'vice', 'san andreas', 'iv'],
+        'zelda': ['breath', 'tears', 'ocarina'],
+        'witcher': ['3', 'wild hunt'],
+        'assassin': ["creed", 'odyssey', 'valhalla'],
+        'red dead': ['redemption', '2'],
+        'elder scrolls': ['skyrim', 'oblivion', 'morrowind'],
+    }
+    
+    for key, keywords in contextual_keywords.items():
+        if key in query_lower:
+            for keyword in keywords:
+                if keyword in game_name:
+                    score += 25
+                    break
+    
+    # 3. Rating utilisateur (20 pts si >= 4.0)
+    rating = game.get('rating', 0)
+    if rating and rating >= 4.0:
+        score += 20
+    elif rating and rating >= 3.5:
+        score += 10
+    
+    # 4. Popularité (15 pts si >= 1000 ratings)
+    ratings_count = game.get('ratings_count', 0)
+    if ratings_count >= 1000:
+        score += 15
+    elif ratings_count >= 500:
+        score += 8
+    
+    # 5. Metacritic (10 pts max, scaled)
+    metacritic = game.get('metacritic')
+    if metacritic:
+        score += (metacritic / 100) * 10
+    
+    # 6. Récence (5 pts si après 2015)
+    released = game.get('released', '')
+    if released:
+        try:
+            year = int(released.split('-')[0])
+            if year >= 2015:
+                score += 5
+        except (ValueError, IndexError):
+            pass
+    
+    # 7. PENALTY: Web/Browser games (-30 pts)
+    platforms = game.get('platforms', []) or []
+    platform_names = []
+    for p in platforms:
+        if p and isinstance(p, dict):
+            platform_data = p.get('platform', {})
+            if platform_data:
+                name = platform_data.get('name', '').lower()
+                if name:
+                    platform_names.append(name)
+    
+    if platform_names:
+        if any('web' in name or 'browser' in name for name in platform_names):
+            # Si UNIQUEMENT Web/Browser, grosse pénalité
+            if all('web' in name or 'browser' in name for name in platform_names):
+                score -= 30
+            else:
+                # Si Web + autres plateformes, pénalité réduite
+                score -= 10
+        
+        # 8. Bonus plateformes majeures (10 pts)
+        major_platforms = ['playstation', 'xbox', 'nintendo', 'pc']
+        if any(major in ' '.join(platform_names) for major in major_platforms):
+            score += 10
+    
+    # 9. Bonus jeux AAA populaires (15 pts)
+    aaa_keywords = [
+        'grand theft auto', 'gta v', 'gta 5',
+        'cyberpunk 2077',
+        'the legend of zelda', 'breath of the wild', 'tears of the kingdom',
+        'the witcher 3',
+        'red dead redemption',
+        'elden ring',
+        'god of war',
+    ]
+    
+    if any(keyword in game_name for keyword in aaa_keywords):
+        score += 15
+    
+    # 10. PENALTY: Fan games, clones, mobile ports (-20 pts)
+    clone_keywords = ['fan', 'clone', 'mobile', 'demo', 'scratch', 'fan-made', 'fangame']
+    if any(keyword in game_name for keyword in clone_keywords):
+        score -= 20
+    
+    # 11. PENALTY: Faible crédibilité (peu d'avis) (-20 à -30 pts)
+    if ratings_count < 10:
+        score -= 30
+    elif ratings_count < 50:
+        score -= 10
+    
+    # 12. PENALTY: Rating 0.0 avec peu d'avis = probablement non-jouable (-25 pts)
+    if rating == 0.0 and ratings_count < 5:
+        score -= 25
+    
+    # 13. PENALTY: Jeux très anciens (<2000) sauf si recherche explicite (-15 pts)
+    # Évite les vieux jeux non pertinents (ex: GTA 1997 quand on cherche "gta")
+    if released:
+        try:
+            year = int(released.split('-')[0])
+            if year < 2000:
+                score -= 15
+        except (ValueError, IndexError):
+            pass
+    
+    return score
 
 
 async def fetch_game_from_rawg(game_name: str, config: dict) -> Optional[Dict]:
@@ -56,7 +200,7 @@ async def fetch_game_from_rawg(game_name: str, config: dict) -> Optional[Dict]:
     
     params = {
         'search': game_name,
-        'page_size': 1,
+        'page_size': 20,  # Fetch 20 résultats pour scorer et filtrer
         'key': api_key,
     }
     
@@ -76,7 +220,31 @@ async def fetch_game_from_rawg(game_name: str, config: dict) -> Optional[Dict]:
                 print(f"[RAWG-API] ❌ Aucun résultat pour '{game_name}'")
                 return None
             
-            game = results[0]
+            # Scorer tous les candidats
+            scored_results = []
+            for game in results:
+                score = _score_game_candidate(game, game_name)
+                scored_results.append((score, game))
+                
+                # Debug: afficher le score de chaque candidat
+                game_display = f"{game.get('name', 'N/A')} ({_extract_year(game.get('released'))})"
+                platforms = game.get('platforms') or []
+                platforms_str = ', '.join([p.get('platform', {}).get('name', '') for p in platforms[:3] if p])
+                print(f"[RAWG-API] 📊 Score {score:.1f}: {game_display} - {platforms_str}")
+            
+            # Filtrer les jeux crédibles (score >= 20)
+            credible_results = [(sc, g) for sc, g in scored_results if sc >= 20]
+            
+            if not credible_results:
+                print(f"[RAWG-API] ❌ Aucun jeu crédible trouvé (tous score < 20)")
+                return None
+            
+            # Trier par score décroissant et prendre le meilleur
+            credible_results.sort(key=lambda x: x[0], reverse=True)
+            best_score, game = credible_results[0]
+            
+            print(f"[RAWG-API] 🏆 Meilleur match (score {best_score:.1f}): {game.get('name')}")
+            
             game_id = game.get('id')
             
             # Extraction et normalisation des données de base
@@ -93,8 +261,8 @@ async def fetch_game_from_rawg(game_name: str, config: dict) -> Optional[Dict]:
                 'rating': game.get('rating'),
                 'ratings_count': game.get('ratings_count', 0),
                 'genres': _parse_genres(game.get('genres', [])),
-                'tags': _parse_tags(game.get('tags', [])),
-                'stores': _parse_stores(game.get('stores', [])),
+                'tags': _parse_tags(game.get('tags', []) or []),
+                'stores': _parse_stores(game.get('stores', []) or []),
                 'background_image': game.get('background_image'),
             }
             
@@ -246,6 +414,12 @@ async def _fetch_game_details(game_id: int, api_key: str, user_agent: str) -> Op
             response.raise_for_status()
             return response.json()
             
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 404:
+            print(f"[RAWG-API] ⚠️ Détails non trouvés pour ID {game_id} (404)")
+            return None  # Pas d'erreur fatale, le jeu reste utilisable
+        print(f"[RAWG-API] ⚠️ Erreur HTTP {e.response.status_code}: {e}")
+        return None
     except Exception as e:
         print(f"[RAWG-API] ⚠️ Erreur récupération détails: {e}")
         return None
