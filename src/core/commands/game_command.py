@@ -120,14 +120,22 @@ async def handle_game_command(message: Message, config: dict, game_name: str, no
             print(f"[GAME] 📺 Channel: {message.channel.name}")
             print(f"[GAME] 🔍 Message complet:\n{result['main']}")
         
-        # 📤 ENVOI (message principal seulement, pas de description)
+        # 📤 ENVOI (message principal + description si disponible)
         if bot:
             await bot.safe_send(message.channel, result["main"])
+            # Envoyer la description sur une 2ème ligne si présente
+            if result.get("description"):
+                await bot.safe_send(message.channel, result["description"])
         else:
             await message.channel.send(result["main"])
+            # Envoyer la description sur une 2ème ligne si présente
+            if result.get("description"):
+                await message.channel.send(result["description"])
         
         if debug:
             print(f"[GAME] ✅ Message envoyé sur Twitch (channel: {message.channel.name})")
+            if result.get("description"):
+                print(f"[GAME] ✅ Description envoyée: {result['description'][:80]}...")
     
     except (RuntimeError, ValueError, KeyError, TypeError) as e:
         if bot:
