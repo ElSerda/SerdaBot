@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - kissbot  # Test KissBot V1 before merge
   pull_request:
     branches:
       - main
