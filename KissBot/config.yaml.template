@@ -1,0 +1,71 @@
+# KissBot V1 Configuration Template
+# Copy this file to config.yaml and replace placeholders with your values
+
+bot:
+  name: "your_bot_name"  # Your bot's display name
+  personality: "helpful, friendly, knowledgeable about games and tech"  # Bot personality for mentions
+  channel: "your_channel"  # Your main Twitch channel
+  debug: false  # Set to true for development
+  cooldown: 5  # Command cooldown in seconds
+  
+# APIs configuration
+apis:
+  rawg_key: "YOUR_RAWG_API_KEY_HERE"  # Get free key from https://rawg.io/apidocs
+  openai_key: "YOUR_OPENAI_API_KEY_HERE"  # Get from https://platform.openai.com/ (optional)
+
+# LLM configuration for !ask and @mentions
+llm:
+  enabled: true
+  local_llm: true  # Enable local LLM (LM Studio/Ollama)
+  provider: "local"  # "local" for LM Studio/Ollama, "openai" for cloud only
+  fallback_provider: "openai"  # Fallback when local fails ("openai" or "none")
+  fallback_mode: "fun"  # "fun" for static responses, "openai" for API fallback
+  
+  # 🎭 PERSONALITY (advanced features)
+  use_personality_on_mention: true   # Enable personality on @mentions
+  use_personality_on_ask: false      # Keep !ask factual and clean
+  personality_only_on_cloud: true    # Only use personality with powerful models (GPT)
+  
+  # Local LLM endpoints
+  model_endpoint: "http://127.0.0.1:1234/v1/chat/completions"  # LM Studio default
+  # model_endpoint: "http://127.0.0.1:11434/v1/chat/completions"  # Ollama alternative
+  model_name: "qwen2.5-7b-instruct"  # Your loaded model name
+  
+  # OpenAI settings
+  openai_model: "gpt-3.5-turbo"  # Or "gpt-4" for better quality
+  
+  # Token limits (adjust based on your model)
+  max_tokens_ask: 200    # For !ask commands (factual responses)
+  max_tokens_chill: 150  # For @mentions (personality responses)
+  temperature_ask: 0.5   # Lower = more factual
+  temperature_chill: 0.8 # Higher = more creative
+
+# RAWG API for game lookup
+rawg:
+  api_key: "YOUR_RAWG_API_KEY_HERE"  # Same as apis.rawg_key
+
+# Twitch Bot Configuration
+twitch:
+  token: "oauth:YOUR_TWITCH_TOKEN_HERE"     # Get from https://twitchapps.com/tmi/
+  client_id: "YOUR_CLIENT_ID_HERE"          # From https://dev.twitch.tv/console
+  client_secret: "YOUR_CLIENT_SECRET_HERE"  # From Twitch app (optional)
+  bot_id: "YOUR_BOT_USER_ID_HERE"          # Your bot's Twitch user ID
+  prefix: "!"
+  channels: ["your_channel"]  # List of channels to join
+
+# Cache settings
+cache:
+  ttl_seconds: 3600  # Cache TTL (1 hour)
+  max_size: 1000     # Maximum cache entries
+
+# Translation settings (optional)
+translation:
+  enabled: false            # Auto-translation feature
+  target_language: "en"     # Target language
+  translate_threshold: 0.7  # Confidence threshold
+
+# Logging
+logging:
+  level: "INFO"              # DEBUG, INFO, WARNING, ERROR
+  console_level: "INFO"      # Console output level
+  file_level: "DEBUG"        # File output level

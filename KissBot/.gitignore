@@ -1,0 +1,88 @@
+# KissBot V1 - Git ignore
+
+# ===== CRITICAL: Virtual environments =====
+kissbot-venv/
+venv/
+env/
+ENV/
+.venv/
+
+# ===== Python runtime =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ===== Development files =====
+.mypy_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# ===== Test & Development artifacts =====
+test_*.py
+*_test.py
+benchmark_*.py
+test_exhaustive_lookup.py
+test_edge_cases.py
+test_kiss_alignment.py
+
+# ===== IDE & Editor =====
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== Runtime files =====
+logs/
+*.log
+cache/
+*.cache
+*.tmp
+*.temp
+
+# ===== Config secrets (keep templates) =====
+config_local.yaml
+.env
+secrets.yaml
+config_*prod*.yaml
+*_secret.yaml
+
+# ===== Data files =====
+game_lookup_baseline_results.json
+benchmark_results*.json
+*.sqlite
+*.db
+
+# ===== Documentation drafts =====
+*_draft.md
+*_temp.md
+TODO_*.md
+
+# ===== Backup files =====
+*.bak
+*.backup
+*~

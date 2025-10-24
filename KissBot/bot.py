@@ -19,7 +19,8 @@ except Exception as e:
 # Backend imports
 try:
     from backends import game_cache
-    from intelligence.auto_translate import AutoTranslateHandler
+    # Auto-translate désactivé pour KISS V1
+    # from intelligence.auto_translate import AutoTranslateHandler
     print("✅ Backend imports OK")
 except Exception as e:
     print(f"❌ Backend import error: {e}")
@@ -92,18 +93,8 @@ class KissBot(commands.Bot):
         self.logger.info("🤖 KissBot V1 - 3-Pillar KISS Architecture")
         
         # Auto-translate handler setup
-        self._setup_auto_translate()
-    
-    def _setup_auto_translate(self):
-        """Setup auto-translate handler pour devs whitelist."""
-        try:
-            # Auto-translate désactivé par choix architectural KISS
-            # La traduction manuelle !trad est suffisante pour les besoins
-            self.auto_translate = None
-            self.logger.info("🌍 Auto-translate désactivé (utilise !trad pour traduction manuelle)")
-        except Exception as e:
-            self.logger.warning(f"Auto-translate non disponible: {e}")
-            self.auto_translate = None
+        # Auto-translate désactivé pour architecture KISS V1
+        self.logger.info("🌍 Auto-translate désactivé (utilise !trad pour traduction manuelle)")
         self.logger.info("✅ Tous les Components chargés")
     
     async def event_ready(self):
@@ -142,12 +133,8 @@ class KissBot(commands.Bot):
         self.logger.info(f"📝 Message de {message.author.name}: {message.content}")
         print(f"📝 {message.author.name}: {message.content}")
         
-        # Auto-translate devs whitelist (avant commands) - temporairement désactivé
-        if hasattr(self, 'auto_translate') and self.auto_translate:
-            try:
-                await self.auto_translate.handle_message(message)
-            except Exception as e:
-                self.logger.error(f"Erreur auto-translate: {e}")
+        # Auto-translate désactivé pour KISS V1
+        # La traduction manuelle !trad est suffisante
         
         # Traiter les commandes (!cmd)
         await self.handle_commands(message)
