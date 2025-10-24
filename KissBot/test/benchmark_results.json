@@ -1,0 +1,89 @@
+{
+  "llm_endpoints": {
+    "local": {
+      "times": [
+        3.1219706535339355,
+        0.9499447345733643,
+        1.1832144260406494,
+        1.9907772541046143,
+        3.1995725631713867
+      ],
+      "success": 5,
+      "errors": 0
+    },
+    "openai": {
+      "times": [
+        1.0052986145019531,
+        0.9694702625274658,
+        1.329580307006836,
+        1.025566577911377,
+        1.8132789134979248
+      ],
+      "success": 5,
+      "errors": 0
+    }
+  },
+  "cascade": {
+    "times": [
+      1.9323465824127197,
+      2.0591838359832764,
+      1.7077505588531494,
+      1.1074228286743164
+    ],
+    "fallback_triggered": 0
+  },
+  "context": {
+    "ask": {
+      "times": [
+        1.6014783382415771,
+        2.0348148345947266,
+        2.23323917388916
+      ],
+      "avg_time": 1.9565107822418213,
+      "responses": [
+        "Python est super pour d\u00e9velopper des applications ",
+        "Python pour d\u00e9velopper des sites web ? Super choix",
+        "Python pour d\u00e9velopper des sites web ? Super choix"
+      ]
+    },
+    "mention": {
+      "times": [
+        2.397338390350342,
+        2.0317866802215576,
+        2.5081939697265625
+      ],
+      "avg_time": 2.3124396800994873,
+      "responses": [
+        "Python pour d\u00e9velopper des sites web ? C'est la co",
+        "Python c'est le top pour web dev ! Facile \u00e0 appren",
+        "Python pour d\u00e9velopper des sites ? C'est la combo "
+      ]
+    },
+    "chill": {
+      "times": [
+        2.076451063156128,
+        1.6379566192626953,
+        2.4384994506835938
+      ],
+      "avg_time": 2.050969044367472,
+      "responses": [
+        "Hey ! Python pour le d\u00e9veloppement web, c'est g\u00e9ni",
+        "Salut ! Pour la dev web avec Python, tu peux utili",
+        "Hey ! Python pour d\u00e9velopper des applications web "
+      ]
+    }
+  },
+  "stress": {
+    "total_time": 11.6698317527771,
+    "individual_times": [
+      5.000361204147339,
+      9.530836343765259,
+      7.742704153060913,
+      3.3712856769561768,
+      11.628756523132324
+    ],
+    "avg_time": 7.454788780212402,
+    "success_rate": 100.0,
+    "failed_requests": 0
+  }
+}

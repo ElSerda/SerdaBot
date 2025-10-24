@@ -1,0 +1,41 @@
+
+============================================================
+🔥 KISSBOT BENCHMARK V2 REPORT
+============================================================
+
+🧠 LLM ENDPOINTS PERFORMANCE:
+
+LOCAL LLM:
+  • Average: 1.91s
+  • Min: 1.31s
+  • Max: 3.27s
+  • Success: 5
+  • Success Rate: 100.0%
+
+OPENAI: 🚫 DISABLED (saves API costs)
+
+🎮 COMMANDS PERFORMANCE:
+  • !ask: 1.56s - 112 chars
+  • !chill: 3.15s - 256 chars
+  • !game: 0.00s - 100 chars
+  • !ping: 0.00s - 50 chars
+  • !stats: 0.01s - 50 chars
+  • !cache: 0.00s - 50 chars
+  • !help: 0.00s - 50 chars
+
+🔄 CASCADE FALLBACK:
+  • Average Response Time: 2.35s
+  • Fallback Triggered: 0 times
+
+🎭 CONTEXT SWITCHING:
+  • ASK: 2.59s avg
+  • MENTION: 1.90s avg
+  • CHILL: 2.26s avg
+
+⚡ STRESS TEST (5 concurrent):
+  • Total Time: 11.94s
+  • Average per Request: 7.75s
+  • Success Rate: 100.0%
+  • Failed Requests: 0
+
+============================================================

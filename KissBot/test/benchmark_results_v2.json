@@ -1,0 +1,127 @@
+{
+  "llm_endpoints": {
+    "local": {
+      "times": [
+        3.268265962600708,
+        1.3149363994598389,
+        1.8201627731323242,
+        1.4178657531738281,
+        1.7239646911621094
+      ],
+      "success": 5,
+      "errors": 0
+    },
+    "openai": {
+      "times": [],
+      "success": 0,
+      "errors": 0
+    }
+  },
+  "commands": {
+    "ask": {
+      "time": 1.562180757522583,
+      "success": true,
+      "response_length": 112,
+      "response_preview": "Python c'est un langage super facile et puissant p..."
+    },
+    "chill": {
+      "time": 3.1502580642700195,
+      "success": true,
+      "response_length": 256,
+      "response_preview": "Coding, c'est comme faire des puzzles tout au long..."
+    },
+    "game": {
+      "time": 5.9604644775390625e-06,
+      "success": true,
+      "response_length": 100,
+      "response_preview": "Real cache miss, would trigger API..."
+    },
+    "ping": {
+      "time": 0.0011410713195800781,
+      "success": true,
+      "response_length": 50,
+      "response_preview": "REAL ping command: 0.0011s"
+    },
+    "stats": {
+      "time": 0.0051326751708984375,
+      "success": true,
+      "response_length": 50,
+      "response_preview": "REAL stats command: 0.0051s"
+    },
+    "cache": {
+      "time": 0.002132892608642578,
+      "success": true,
+      "response_length": 50,
+      "response_preview": "REAL cache command: 0.0021s"
+    },
+    "help": {
+      "time": 0.003111600875854492,
+      "success": true,
+      "response_length": 50,
+      "response_preview": "REAL help command: 0.0031s"
+    }
+  },
+  "cascade": {
+    "times": [
+      2.603684186935425,
+      1.426299810409546,
+      2.630728244781494,
+      2.7425169944763184
+    ],
+    "fallback_triggered": 0
+  },
+  "context": {
+    "ask": {
+      "times": [
+        2.4329774379730225,
+        2.5313398838043213,
+        2.820565700531006
+      ],
+      "avg_time": 2.5949610074361167,
+      "responses": [
+        "Commence par apprendre les bases de Python, puis d",
+        "Commence par apprendre les bases de Python, puis d",
+        "Commence par apprendre les bases de Python, puis d"
+      ]
+    },
+    "mention": {
+      "times": [
+        2.0450103282928467,
+        2.0497994422912598,
+        1.6113851070404053
+      ],
+      "avg_time": 1.9020649592081706,
+      "responses": [
+        "Ouais, Python pour le web c'est sick ! Flask ou Dj",
+        "Oui mec, Python c'est la bombes pour web dev avec ",
+        "Oui mec, Python pour le dev web c'est cool avec Fl"
+      ]
+    },
+    "chill": {
+      "times": [
+        2.0152111053466797,
+        2.0328750610351562,
+        2.7276451587677
+      ],
+      "avg_time": 2.2585771083831787,
+      "responses": [
+        "Oui, Python pour le développement web c'est top ! ",
+        "Ouais, Python pour le développement web c'est top ",
+        "Ouais, Python web dev c'est cool ! Flask ou Django"
+      ]
+    }
+  },
+  "stress": {
+    "total_time": 11.944387197494507,
+    "individual_times": [
+      2.5542409420013428,
+      5.160331726074219,
+      11.432527780532837,
+      11.913210153579712,
+      7.685516357421875
+    ],
+    "avg_time": 7.749165391921997,
+    "success_rate": 100.0,
+    "failed_requests": 0
+  }
+}
