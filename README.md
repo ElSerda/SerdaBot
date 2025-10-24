@@ -1,59 +1,144 @@
 ![CI](https://github.com/ElSerda/SerdaBot/actions/workflows/ci.yml/badge.svg)
 
-# 🤖 SerdaBot – Twitch AI Assistant (v0.1.0-alpha)
+# 🚀 SerdaBot Repository - Now featuring KissBot V1
 
-![Version](https://img.shields.io/badge/version-v0.1.0--alpha-orange)
+![Version](https://img.shields.io/badge/KissBot-V1.0.0-brightgreen)
 ![License](https://img.shields.io/badge/license-AGPL--v3-blue)
-![Python](https://img.shields.io/badge/python-3.10+-blue)
-![Status](https://img.shields.io/badge/status-Alpha-yellow)
+![Python](https://img.shields.io/badge/python-3.12+-blue)
+![KISS](https://img.shields.io/badge/architecture-KISS-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
-SerdaBot is a lightweight, multilingual Twitch chat assistant powered by Qwen 2.5-3B (local LLM via LM Studio). Designed for simplicity, extensibility, and fun.
+## 🎯 **KissBot V1 - KISS Architecture Rewrite** ⭐ **RECOMMENDED**
+
+**Ultra-lean Twitch bot with 73% code reduction - from 7,468 lines to 2,021 lines**
+
+### 🔥 **Ready for Production:**
+- ✅ **ONE-LINER Installation** (Linux/Windows)  
+- ✅ **90-99% Game Lookup Reliability**  
+- ✅ **Model-Specific Prompting** (Qwen, LLaMA, Mistral)  
+- ✅ **Cascade Fallback System** (Local → Cloud → Static)  
+- ✅ **Complete Documentation & Testing**  
+
+**👉 [Go to KissBot V1](KissBot/) 👈**
 
 ---
 
-## ⚙️ Features
+## 📊 **Architecture Comparison**
 
-| Command | Description |
-|--------|-------------|
-| `!ask <question>` | **NEW:** Smart routing system - Game questions use RAWG data (0% hallucinations), general questions use LLM. 20,000x faster for game facts. **Works without LLM** (fallback mode). |
-| `!game <title>` | Search for a video game and get detailed info: developers, publishers, platforms, ratings (via RAWG API with cache). |
-| `!trad <message>` | Translate a message into the stream's language (default: French). |
-| Mention bot name | Trigger a casual/fun response with geek humor (`!chill` behavior). **Works without LLM** (fallback mode). |
-
-**🤖 LLM Optional** : SerdaBot works perfectly with or without a local LLM. See [LLM Fallback](docs/LLM_FALLBACK.md) for details.
-
----
-
-## 🧠 Powered by
-
-- **Qwen 2.5-3B-Instruct-Q4_K_M** (local via LM Studio) - Upgraded from 1.5B for better quality — **OPTIONAL**
-- **Automatic fallback** - Bot works perfectly without LLM (pre-defined responses)
-- **RAWG API** - Primary source for game data (100% factual, zero hallucinations)
-- **Intelligent routing** - RAWG for game facts, Wikipedia for context, LLM for general questions
-- Optimized prompts (SYSTEM_CHILL_FINAL: geek humor, anti-hallucination rules)
-- LibreTranslate (local or remote) for multilingual support
-- TwitchIO for real-time chat integration
-- **Performance**: 0.2ms (RAWG cache) to 6000ms (LLM), 20,000x improvement on game questions
+| Feature | SerdaBot (Legacy) | **KissBot V1** |
+|---------|------------------|---------------|
+| **Lines of Code** | 7,468 | **2,021 (-73%)** |
+| **Architecture** | Complex modules | **3-Pillar KISS** |
+| **Installation** | Multi-step setup | **ONE-LINER** |
+| **LLM Integration** | Single provider | **Model-specific prompts** |
+| **Game Lookup** | Basic search | **Confidence scoring** |
+| **Error Handling** | Basic | **Comprehensive fallbacks** |
+| **Documentation** | Scattered | **Complete guides** |
+| **Status** | Legacy/Archive | **✅ Production Ready** |
 
 ---
 
-## 📁 Project Structure
+## 🎮 **KissBot V1 Features**
 
-- `src/core/commands/` → Each command (`ask`, `game`, `trad`, `chill`)
-- `src/utils/` → Shared helpers (`llm`, `game_utils`, `translation`, etc.)
-- `tools/` → Scripts to start/stop servers, test locally
-- `config/` → YAML-based config system
-- [`PROJECT_STRUCTURE.md`](./PROJECT_STRUCTURE.md) → Full architecture overview
+### 🤖 Commands
+- `!gameinfo <name>` / `!gi` - Game info with 90-99% reliability
+- `!gamecategory` / `!gc` - Auto-detect current stream game  
+- `!ask <question>` - Ask LLM with smart fallbacks
+- `!ping`, `!stats`, `!help`, `!cache` - Utility commands
 
----
+### 🧠 Intelligence
+- **Local LLM** (LM Studio/Ollama) → **OpenAI** → **Static responses**
+- **Model detection** with optimized prompts per model type
+- **Anti-hallucination** system for factual responses
 
-## 🚀 Quick Start
-
-### Première installation
-
+### 🎯 **Get Started in 30 seconds:**
 ```bash
-# 1. Cloner le repo
+# Linux/Mac ONE-LINER
+curl -fsSL https://raw.githubusercontent.com/ElSerda/SerdaBot/kissbot/KissBot/quick-install.sh | bash
+
+# Windows ONE-LINER  
+iwr -Uri "https://raw.githubusercontent.com/ElSerda/SerdaBot/kissbot/KissBot/quick-install.ps1" | iex
+```
+
+---
+
+## �️ **SerdaBot Legacy (Archive)**
+
+<details>
+<summary>📚 <strong>View Legacy SerdaBot Documentation</strong> (v0.1.0-alpha)</summary>
+
+### Legacy Features
+- `!ask <question>` - Smart routing system with LLM
+- `!game <title>` - Basic game search via RAWG API  
+- `!trad <message>` - Translation support
+- Mention responses with geek humor
+
+### Legacy Architecture  
+- **7,468 lines** of complex modular code
+- Multiple LLM providers with basic prompts
+- Complex configuration system
+- Multi-step installation process
+
+**⚠️ Note:** Legacy SerdaBot is archived and no longer maintained. Please use **KissBot V1** for production deployments.
+
+**📁 Legacy Structure:**
+- `src/core/commands/` → Legacy command implementations
+- `src/utils/` → Legacy shared helpers  
+- `tools/` → Legacy scripts and utilities
+- `config/` → Legacy YAML configuration
+- [`PROJECT_STRUCTURE.md`](./PROJECT_STRUCTURE.md) → Legacy architecture overview
+
+</details>
+
+---
+
+## 🏗️ **Development & Architecture**
+
+- **KissBot V1** follows KISS principles (Keep It Simple, Stupid)
+- **3-Pillar Architecture:** Commands, Intelligence, Twitch
+- **Model-Specific Prompting:** Automatic detection and optimization
+- **Comprehensive Testing:** 100% KISS alignment validation
+
+**📖 Documentation:**
+- [KissBot README](KissBot/README.md) - Complete installation and usage
+- [Commands Guide](KissBot/COMMANDS.md) - Detailed command documentation  
+- [Production Checklist](KissBot/PRODUCTION_CHECKLIST.md) - Deployment validation
+- [Linux/Ollama Setup](KissBot/OLLAMA_LINUX_SETUP.md) - Complete Linux guide
+
+---
+
+## 🤝 **Contributing**
+
+We welcome contributions! Please:
+1. **Use KissBot V1** as the base for new features
+2. Follow KISS architecture principles  
+3. Maintain comprehensive documentation
+4. Test thoroughly before submitting PRs
+
+**Development Setup:**
+```bash
+git clone https://github.com/ElSerda/SerdaBot.git
+cd SerdaBot/KissBot
+./quick-install.sh  # Sets up development environment
+```
+
+---
+
+## ❤️ **Credits**
+
+**Built by El Serda** ☕ — for streamers, by a streamer  
+**Co-developed with AI Dream Team** (GPT & Claude) 🤖  
+
+Fork it, remix it, improve it!  
+**Want to support?** → [ko-fi.com/el_serda](https://ko-fi.com/el_serda)
+
+---
+
+## 📄 **License**
+
+**AGPL-3.0** — because open AI tools should remain open.
+
+**🚀 Ready to get started? [Jump to KissBot V1](KissBot/) and be running in 30 seconds!**
 git clone https://github.com/ElSerda/SerdaBot.git
 cd SerdaBot
 
