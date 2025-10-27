@@ -39,11 +39,19 @@ async def handle_mention(bot, message):
         bot.logger.error("IntelligenceCommands Cog not loaded!")
         return f"@{message.author.name} Erreur IA 😵"
     
+    # 🎮 KISS: Utiliser le game_cache du bot (déjà chargé)
+    game_cache = getattr(bot, 'game_cache', None)
+    if game_cache:
+        bot.logger.info(f"🎮 Game cache disponible: {len(game_cache.cache)} jeux")
+    else:
+        bot.logger.warning("Game cache non disponible")
+    
     response = await process_llm_request(
         llm_handler=intelligence_cog.llm_handler,
         prompt=user_message,
         context="mention",
-        user_name=message.author.name
+        user_name=message.author.name,
+        game_cache=game_cache
     )
     
     # 💬 Réponse Twitch

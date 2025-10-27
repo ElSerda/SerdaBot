@@ -14,12 +14,14 @@ import os
 from typing import List, Dict, Any
 import json
 
-# Add parent directory to path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Setup path pour imports KissBot
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 try:
-    from local_llm import LLMHandler
-    from game_cache import GameCache
+    from intelligence.handler import LLMHandler
+    from backends.game_cache import GameCache
+    from config_loader import load_config
     import yaml
 except ImportError as e:
     print(f"❌ Import error: {e}")
@@ -32,11 +34,12 @@ class KissBotBenchmarkV2:
         """Initialize benchmark with config."""
         print("🔥 KISSBOT BENCHMARK V2 INITIALIZED")
         
-        with open('../config.yaml', 'r', encoding='utf-8') as f:
-            self.config = yaml.safe_load(f)
+        # Load config moderne
+        config = load_config()
+        self.config = config
         
-        self.llm = LLMHandler(self.config)
-        self.game_cache = GameCache()  # Initialize real cache
+        self.llm = LLMHandler(config)
+        self.game_cache = GameCache(config)  # Initialize real cache
         self.test_openai = test_openai
         self.results = {}
         

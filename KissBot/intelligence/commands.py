@@ -33,11 +33,15 @@ class IntelligenceCommands(commands.Cog):
             return
         
         # 🧠 Logique métier (testable)
+        # 🎮 KISS: Utiliser le game_cache du bot (déjà chargé)
+        game_cache = getattr(self.bot, 'game_cache', None)
+        
         response = await process_llm_request(
             llm_handler=self.llm_handler,
             prompt=question,
             context="ask",
-            user_name=ctx.author.name
+            user_name=ctx.author.name,
+            game_cache=game_cache
         )
         
         # 💬 Réponse Twitch

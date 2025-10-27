@@ -11,6 +11,12 @@ httpx==0.28.1
 # Configuration
 PyYAML==6.0.3
 
+# Smart Context - Fuzzy matching pour noms de jeux
+rapidfuzz>=3.0.0
+
+# Monitoring système
+psutil>=5.9.0
+
 # LLM et APIs (optionnel)
 # requests>=2.31.0  # Pour APIs externes si nécessaire
 

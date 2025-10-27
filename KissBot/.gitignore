@@ -81,6 +81,7 @@ benchmark_results*.json
 *_draft.md
 *_temp.md
 TODO_*.md
+Todo-Dev/
 
 # ===== Backup files =====
 *.bak

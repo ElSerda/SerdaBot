@@ -37,6 +37,9 @@ class GameResult:
     playtime: int = 0
     popularity: int = 0  # "added" count
     esrb_rating: str = ""
+    # 🎮 KISS Enhancement: Summary pour enrichissement LLM contexte
+    summary: Optional[str] = None  # Description courte du jeu (RAWG API)
+    description_raw: Optional[str] = None  # Description complète si nécessaire
     reliability_score: float = 0.0
     confidence: str = "LOW"
     source_count: int = 1
@@ -181,6 +184,10 @@ class GameLookup:
                 'rating': best_game.get('rating', 0),
                 'metacritic': best_game.get('metacritic'),
                 'platforms': [p.get('platform', {}).get('name', '') for p in best_game.get('platforms', [])],
+                # 🎮 KISS Enhancement: Récupérer genres et description pour contexte LLM
+                'genres': [g.get('name', '') for g in best_game.get('genres', [])],
+                'description': best_game.get('description', ''),  # Sera null dans search
+                'description_raw': best_game.get('description_raw', ''),  # Sera null dans search
                 'source': 'rawg'
             }
             
@@ -209,11 +216,30 @@ class GameLookup:
             for platform, available in game.get('platforms', {}).items():
                 if available:
                     platforms.append(platform.capitalize())
-            
+
+            # 🎯 KISS Enhancement: Récupérer description française via Steam appdetails
+            steam_description = None
+            app_id = game.get('id')
+            if app_id:
+                try:
+                    details_params = {"appids": app_id, "l": "french", "cc": "fr"}
+                    details_response = await self.http_client.get(
+                        "https://store.steampowered.com/api/appdetails", 
+                        params=details_params
+                    )
+                    details_data = details_response.json()
+                    game_details = details_data.get(str(app_id), {}).get('data', {})
+                    steam_description = game_details.get('short_description', '')
+                except Exception as e:
+                    self.logger.debug(f"Steam details fetch failed: {e}")
+
             return {
                 'name': game.get('name', ''),
                 'metacritic': game.get('metascore'),
                 'platforms': platforms,
+                # 🇫🇷 Description en français de Steam !
+                'description': steam_description,
+                'description_raw': steam_description,
                 'source': 'steam'
             }
             
@@ -254,6 +280,20 @@ class GameLookup:
         if not data:
             return None
         
+        # 🎯 FIX FUSION: Fusionner descriptions intelligemment
+        # Priorité : Steam (français) > RAWG (anglais)
+        summary = None
+        description_raw = None
+        
+        if steam_data and steam_data.get('description'):
+            # Steam a une description française - priorité !
+            summary = steam_data.get('description', '').strip()[:300]
+            description_raw = steam_data.get('description_raw', '').strip()[:500]
+        elif rawg_data and rawg_data.get('description'):
+            # Fallback RAWG anglais
+            summary = rawg_data.get('description', '').strip()[:300]
+            description_raw = rawg_data.get('description_raw', '').strip()[:500]
+        
         # Créer résultat de base
         result = GameResult(
             name=data['name'],
@@ -261,6 +301,10 @@ class GameLookup:
             rating_rawg=data.get('rating', 0),
             metacritic=data.get('metacritic'),
             platforms=data.get('platforms', [])[:3],  # Max 3 plateformes
+            # 🇫� Descriptions fusionnées avec priorité français !
+            summary=summary,
+            description_raw=description_raw,
+            genres=data.get('genres', []),  # 🎯 FIX: Assigner les genres !
             source_count=1,
             primary_source='RAWG' if rawg_data else 'Steam',
             api_sources=['RAWG'] if rawg_data else ['Steam']

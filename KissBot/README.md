@@ -1,27 +1,71 @@
+<div align="center">
+
 # 🎮 KissBot V1 - Twitch Bot KISS
 
-**Ultra-lean Twitch bot with 3-Pillar architecture - Commands, Intelligence, Twitch**
+**Ultra-lean Twitch bot with 3-Pillar architecture + Revolutionary Quantum Cache System**
+
+<table>
+<tr>
+<td align="center">
+<img src="assets/screenshots/kissbot_logo_v1.png" width="180" alt="KissBot Logo V1"/>
+<br><em>Logo Design V1</em>
+</td>
+<td align="center">
+<img src="assets/screenshots/kissbot_logo_v2.png" width="180" alt="KissBot Logo V2"/>
+<br><em>Logo Design V2</em>
+</td>
+</tr>
+</table>
 
 [![Python](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![TwitchIO](https://img.shields.io/badge/TwitchIO-2.7.0-blueviolet)](https://github.com/TwitchIO/TwitchIO)
 [![KISS](https://img.shields.io/badge/architecture-KISS-brightgreen)](#architecture)
+[![Quantum](https://img.shields.io/badge/physics-quantum%20cache-blueviolet)](#quantum-system)
 [![Tests](https://img.shields.io/badge/tests-15%2F15-success)](#testing)
+
+</div>
 
 ---
 
-## 🎯 Philosophy
+## � KissBot en Action
 
-**Keep It Simple, Stupid** - Rewrite from scratch de SerdaBot avec:
+<div align="center">
+
+### 💬 Discord Integration Demos
+
+<table>
+<tr>
+<td align="center">
+<img src="assets/screenshots/kissbot_discord_demo_1.png" width="400" alt="KissBot Demo 1"/>
+<br><em>🎮 Gaming Interaction Demo</em>
+</td>
+<td align="center">
+<img src="assets/screenshots/kissbot_discord_demo_2.png" width="400" alt="KissBot Demo 2"/>
+<br><em>🤖 AI Conversation Demo</em>
+</td>
+</tr>
+</table>
+
+*Images showcasing KissBot's intelligent responses and gaming knowledge*
+
+</div>
+
+---
+
+## �🎯 Philosophy
+
+**Keep It Simple, Stupid** + **Quantum Learning** - Rewrite from scratch de SerdaBot avec:
 - ✅ **18.5x moins de code** (400 lignes vs 7,400)
 - ✅ **3-Pillar architecture** (Commands, Intelligence, Twitch)
 - ✅ **Zero hallucination** (prompts minimaux)
 - ✅ **99%+ game coverage** (RAWG + Steam)
+- 🔬 **NEW: Quantum Cache System** - Bot learns from user confirmations
 
 ---
 
 ## ✨ Features
 
-### 🤖 Commands
+### 🤖 Classic Commands
 - `!gameinfo <name>` / `!gi` - Game info (RAWG + Steam APIs) *[90-99% reliable]*
 - `!gamecategory` / `!gc` - **NEW!** Auto-detect current stream game
 - `!ask <question>` - Ask LLM
@@ -31,7 +75,64 @@
 - `!cache` - Cache statistics
 - `!serdagit` - Bot source code & creator info
 
+### 🔬 NEW: Quantum Commands
+- `!qgame <name>` - **Quantum game search** with learning superposition
+- `!collapse <name>` - **Confirm game** → permanent quantum state
+- `!qstats` - Quantum cache statistics & learning metrics
+- `!qsuggest <name>` - View all superposition states
+- `!qhelp` - Quantum system help
+
 > **📋 Full commands documentation:** [COMMANDS.md](COMMANDS.md) - includes reliability details and edge cases
+
+### 🔬 Revolutionary Quantum Cache System
+
+**World's first quantum mechanics-based cache for Twitch bots!**
+
+The quantum system transforms your classic `!gameinfo` command into an **adaptive learning experience**:
+
+#### 🎯 **Enhanced !gameinfo Command**
+```
+User: !gameinfo hades
+Bot: ⚛️ Hades | █████████░ 0.9 | SUPERPOSITION
+     ⚛️ Hades (2020) - 🏆 93/100 | 🕹️ PC, PlayStation 5 - SUGGESTION (0.9) • !collapse pour confirmer
+
+User: !collapse hades  
+Bot: 💥 @user a fait COLLAPSE l'état 'hades' → État figé permanent !
+
+User: !gameinfo hades  (future searches)
+Bot: 🔒 Hades | ██████████ 1.0 | COLLAPSED
+     🔒 Hades (2020) - 🏆 93/100 | 🕹️ PC, PlayStation 5 - CONFIRMÉ (1.0)
+```
+
+#### ⚛️ **Quantum Phenomena Implementation**
+
+| Quantum Phenomenon | Bot Behavior | Visual Result |
+|-------------------|--------------|---------------|
+| **⚛️ Superposition** | Multiple game suggestions until user validation | `⚛️ Game │ ████████░░ 0.8 │ SUPERPOSITION` |
+| **💥 Collapse** | User confirms → state becomes permanent (`verified: 1`) | `🔒 Game │ ██████████ 1.0 │ COLLAPSED` |
+| **🔗 Entanglement** | Similar games influence each other's confidence | Auto-boost related games |
+| **💨 Decoherence** | Unconfirmed games evaporate after 30min | `❓ Game │ ██████░░░░ 0.6 │ SUPERPOSITION` → *(evaporates)* |
+| **👁️ Observer Effect** | Users influence bot through their choices | Continuous self-improvement |
+| **⏱️ Volatile States** | Suggestions disappear if ignored | No cache pollution |
+
+#### 🔬 **Visual Dashboard**
+```
+!qdash
+🔬 [SERDA_BOT]
+🔒 Hades | █████████░ 0.9 | COLLAPSED
+⚛️ Celeste | ███████░░░ 0.7 | SUPERPOSITION  
+❓ Zelda | ██████░░░░ 0.6 | SUPERPOSITION
+```
+
+**🎯 Benefits:**
+- 🧠 **Bot truly learns** from user confirmations
+- ⚡ **Gets smarter** the more it's used  
+- 🎯 **Adapts** to community preferences
+- 🧹 **Self-cleaning** (no manual cache management)
+- 🔗 **Knowledge propagation** via quantum entanglement
+- 📊 **Visual feedback** with progress bars and real-time states
+
+> **📖 Complete quantum documentation:** [docs/QUANTUM_SYSTEM.md](docs/QUANTUM_SYSTEM.md)
 
 ### 🎯 Stream Detection
 - **Live Game Detection:** Twitch Helix API integration
@@ -105,6 +206,18 @@ llm:
 apis:
   rawg_key: "YOUR_RAWG_KEY"  # Get from rawg.io/apidocs
   openai_key: "sk-..."  # Optional OpenAI fallback
+
+# 🔬 NEW: Quantum Cache Configuration (Optional)
+quantum_cache:
+  ttl_verified_seconds: 86400        # 24h - Permanent states
+  ttl_unverified_seconds: 1800       # 30min - Virtual particles
+  max_superposition_states: 3        # Max simultaneous states
+  entanglement_enabled: true         # Enable quantum entanglement
+
+quantum_games:
+  auto_entangle_threshold: 0.8       # Auto-link similar games
+  confirmation_boost: 0.3            # +30% confidence on confirm
+  max_suggestions: 3                 # Max suggestions displayed
 ```
 
 ### 3. LLM Setup

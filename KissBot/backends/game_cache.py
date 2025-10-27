@@ -1,25 +1,49 @@
 """
-🎮 Cache système pour API jeux - KissBot V1
+🎮 Game Cache Classique - KissBot V1
 
-Cache simple mais efficace pour éviter de poncer RAWG API !
+Cache système optimisé pour les données de jeux.
+Archi parallèle au QuantumGameCache pour compatibilité.
+
+FONCTIONNALITÉS :
+├── Cache simple et efficace
+├── Gestion TTL automatique  
+├── Nettoyage expired intelligent
+├── Compatibilité config standard
+└── Fallback pour système quantique
 """
 
 import json
+import logging
 import os
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Dict, Any, Optional
-from typing import Optional, Dict, Any
-import logging
 
-logger = logging.getLogger(__name__)
+from core.cache_interface import BaseCacheInterface, CacheStats
 
-class GameCache:
-    """Cache système pour les données de jeux."""
+class GameCache(BaseCacheInterface):
+    """
+    Cache Classique pour les jeux - Architecture parallèle au QuantumCache
     
-    def __init__(self, cache_file: str = "cache/games.json", cache_duration_hours: int = 24):
+    WORKFLOW CLASSIQUE :
+    - Recherche directe par clé
+    - TTL fixe configurable
+    - Pas d'apprentissage adaptatif
+    - Cache simple mais robuste
+    """
+    
+    def __init__(self, config: Dict[str, Any], cache_file: str = "cache/games.json"):
+        super().__init__(config)
         self.cache_file = cache_file
-        self.cache_duration = timedelta(hours=cache_duration_hours)
+        
+        # Configuration cache depuis config
+        cache_config = config.get('cache', {})
+        self.cache_duration = timedelta(hours=cache_config.get('duration_hours', 24))
+        
+        # Initialisation
         self.cache: Dict[str, Any] = {}
+        self.logger = logging.getLogger(__name__)
+        
         self._ensure_cache_dir()
         self._load_cache()
     
@@ -46,12 +70,12 @@ class GameCache:
                         valid_cache[key] = entry
                 
                 self.cache = valid_cache
-                logger.info(f"🗂️ Cache chargé: {len(self.cache)} entrées valides")
+                self.logger.info(f"🗂️ Cache chargé: {len(self.cache)} entrées valides")
             else:
-                logger.info("🗂️ Nouveau cache créé")
+                self.logger.info("🗂️ Nouveau cache créé")
                 
         except Exception as e:
-            logger.error(f"Erreur chargement cache: {e}")
+            self.logger.error(f"Erreur chargement cache: {e}")
             self.cache = {}
     
     def _save_cache(self):
@@ -60,7 +84,7 @@ class GameCache:
             with open(self.cache_file, 'w', encoding='utf-8') as f:
                 json.dump(self.cache, f, indent=2, ensure_ascii=False)
         except Exception as e:
-            logger.error(f"Erreur sauvegarde cache: {e}")
+            self.logger.error(f"Erreur sauvegarde cache: {e}")
     
     def get(self, game_query: str) -> Optional[Dict[Any, Any]]:
         """Récupérer un jeu du cache."""
@@ -72,29 +96,35 @@ class GameCache:
             
             # Vérifier si pas expiré
             if datetime.now() - cached_time < self.cache_duration:
-                logger.info(f"🎯 Cache HIT: {game_query}")
+                self.logger.info(f"🎯 Cache HIT: {game_query}")
                 return entry['data']
             else:
                 # Supprimer entrée expirée
                 del self.cache[cache_key]
-                logger.info(f"⏰ Cache EXPIRED: {game_query}")
+                self.logger.info(f"⏰ Cache EXPIRED: {game_query}")
         
-        logger.info(f"❌ Cache MISS: {game_query}")
+        self.logger.info(f"❌ Cache MISS: {game_query}")
         return None
     
-    def set(self, game_query: str, game_data: Dict[Any, Any]):
-        """Mettre en cache un jeu."""
-        cache_key = game_query.lower().strip()
-        
-        entry = {
-            'data': game_data,
-            'cached_at': datetime.now().isoformat(),
-            'query': game_query
-        }
-        
-        self.cache[cache_key] = entry
-        self._save_cache()
-        logger.info(f"💾 Cache SAVE: {game_query}")
+    def set(self, game_query: str, game_data: Dict[Any, Any], **kwargs) -> bool:
+        """Mettre en cache un jeu - Interface BaseCacheInterface."""
+        try:
+            cache_key = game_query.lower().strip()
+            
+            entry = {
+                'data': game_data,
+                'cached_at': datetime.now().isoformat(),
+                'query': game_query
+            }
+            
+            self.cache[cache_key] = entry
+            self._save_cache()
+            self.logger.info(f"💾 Cache SAVE: {game_query}")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"❌ Erreur cache save: {e}")
+            return False
     
     def clear_expired(self):
         """Nettoyer les entrées expirées."""
@@ -111,16 +141,73 @@ class GameCache:
         
         if expired_keys:
             self._save_cache()
-            logger.info(f"🧹 Cache nettoyé: {len(expired_keys)} entrées expirées")
+            self.logger.info(f"🧹 Cache nettoyé: {len(expired_keys)} entrées expirées")
     
-    def get_stats(self) -> Dict[str, Any]:
-        """Stats du cache."""
-        return {
-            'total_entries': len(self.cache),
-            'cache_file': self.cache_file,
-            'cache_duration_hours': self.cache_duration.total_seconds() / 3600,
-            'games_cached': [entry['query'] for entry in self.cache.values()]
-        }
+    def get_stats(self) -> CacheStats:
+        """Stats du cache compatible interface."""
+        total_keys = len(self.cache)
+        return CacheStats(
+            total_keys=total_keys,
+            confirmed_keys=total_keys,  # Tout est confirmé en cache classique
+            cache_hits=0,  # Pas de compteur simple dans cette version
+            cache_misses=0,
+            hit_rate=0.0,
+            total_size_mb=0.0,
+            avg_confidence=1.0,  # Confiance maximale en cache classique
+            quantum_enabled=False
+        )
+    
+    async def search(self, query: str, **kwargs) -> Optional[Dict[str, Any]]:
+        """Recherche compatible interface (délégue vers get)."""
+        return self.get(query)
+    
+    def clear(self) -> bool:
+        """Vide le cache compatible interface."""
+        try:
+            self.clear_all()
+            return True
+        except Exception:
+            return False
+    
+    def cleanup_expired(self) -> int:
+        """Nettoie les entrées expirées."""
+        initial_count = len(self.cache)
+        now = datetime.now()
+        
+        expired_keys = []
+        for key, entry in self.cache.items():
+            cached_time = datetime.fromisoformat(entry['cached_at'])
+            if now - cached_time >= self.cache_duration:
+                expired_keys.append(key)
+        
+        for key in expired_keys:
+            del self.cache[key]
+        
+        if expired_keys:
+            self._save_cache()
+            self.logger.info(f"🧹 {len(expired_keys)} entrées expirées supprimées")
+        
+        return len(expired_keys)
 
-# Instance globale
-game_cache = GameCache()
+    def clear_game(self, game_query: str) -> bool:
+        """Supprimer un jeu spécifique du cache."""
+        cache_key = game_query.lower().replace(' ', '_')
+        
+        if cache_key in self.cache:
+            del self.cache[cache_key]
+            self._save_cache()
+            self.logger.info(f"🗑️ Cache supprimé: {game_query}")
+            return True
+        
+        self.logger.warning(f"🤷 Jeu non trouvé dans cache: {game_query}")
+        return False
+    
+    def clear_all(self):
+        """Vider complètement le cache."""
+        cache_size = len(self.cache)
+        self.cache = {}
+        self._save_cache()
+        self.logger.info(f"🗑️ Cache vidé complètement: {cache_size} entrées supprimées")
+
+# Instance globale - À initialiser avec config au runtime
+# game_cache = GameCache(config)

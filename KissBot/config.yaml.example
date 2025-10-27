@@ -155,6 +155,41 @@ cache:
   max_size: 1000
 
 # ========================================
+# CONFIGURATION SYSTÈME QUANTIQUE
+# ========================================
+quantum_cache:
+  # TTL États collapsed (vérifiés par utilisateurs)
+  ttl_verified_seconds: 86400        # 24h - États permanents
+  
+  # TTL États en superposition (non-vérifiés)  
+  ttl_unverified_seconds: 1800       # 30min - Particules virtuelles
+  
+  # Limite superposition simultanée (principe incertitude)
+  max_superposition_states: 3        # Max 3 états par clé
+  
+  # Activation système intrication
+  entanglement_enabled: true
+  
+  # Logs détaillés phénomènes quantiques
+  debug_quantum: false
+
+quantum_games:
+  # Seuil auto-intrication (genres similaires)
+  auto_entangle_threshold: 0.8       # Confiance min pour auto-lien
+  
+  # Boost confiance sur confirmation utilisateur
+  confirmation_confidence_boost: 0.3  # +30% confiance
+  
+  # Nombre max suggestions affichées
+  max_suggestions: 3
+  
+  # Cache file spécialisé jeux quantiques
+  cache_file: "cache/quantum_games.json"
+  
+  # Cleanup automatique (décohérence)
+  auto_cleanup_interval: 3600        # 1h entre nettoyages auto
+
+# ========================================
 # CONFIGURATION TRADUCTION
 # ========================================
 translation:
